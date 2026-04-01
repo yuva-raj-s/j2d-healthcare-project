@@ -1,0 +1,42 @@
+{
+    "name": "TRG_Weekly_Healthcare_Ingest",
+    "properties": {
+        "description": "Weekly schedule trigger for J2D Healthcare ingestion pipeline. Fires every Monday at 6:00 AM IST (00:30 AM UTC). Passes input_date as YYYYMMDD from trigger scheduled time.",
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "PL_J2D_HealthcareIngest",
+                    "type": "PipelineReference"
+                },
+                "parameters": {
+                    "input_date": {
+                        "value": "@formatDateTime(trigger().scheduledTime,'yyyyMMdd')",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "startTime": "2026-04-07T00:30:00",
+                "timeZone": "UTC",
+                "schedule": {
+                    "weekDays": [
+                        "Monday"
+                    ],
+                    "hours": [0],
+                    "minutes": [30]
+                }
+            }
+        },
+        "annotations": [
+            "j2d-healthcare",
+            "weekly",
+            "auto-trigger"
+        ]
+    }
+}
