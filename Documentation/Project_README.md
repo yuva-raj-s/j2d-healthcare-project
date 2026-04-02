@@ -104,33 +104,38 @@ An **industry-standard healthcare data pipeline** built on **Microsoft Azure** (
 
 ```
 J2D_Healthcare_Project/
-├── Helper_NB.py                          # Shared utility functions
-├── Raw_NB.py                             # Raw → Bronze layer notebook
-├── Silver_NB.py                          # Bronze → Silver layer notebook
-├── Gold_NB.py                            # Silver → Gold layer notebook ← UPDATED
-├── Create table.py                       # Silver Delta table DDL
+├── ADF_Assets/
+│   ├── Linked_Services/                  # Azure connection endpoints
+│   └── Pipelines/                        # ADF pipeline pipelines & triggers
 │
-├── SQL_Scripts/
-│   ├── mysql_hospital_setup.sql          # MySQL DDL + sample inserts
-│   ├── azuresql_device_setup.sql         # Azure SQL DDL + sample inserts
-│   ├── postgresql_pharma_setup.sql       # PostgreSQL DDL + sample inserts
-│   ├── synapse_external_tables.sql       # Synapse external tables (Parquet)
+├── Database_Scripts/
+│   ├── azuresql_device_setup.sql         # Azure SQL DDL + source inserts
+│   ├── mysql_hospital_setup.sql          # MySQL DDL + source inserts
+│   ├── postgresql_pharma_setup.sql       # PostgreSQL DDL + source inserts
+│   ├── synapse_external_tables.sql       # Synapse external tables (Serverless)
 │   └── synapse_gold_views.sql            # Power BI-ready views
 │
-├── ADF_Pipeline_JSON/
-│   ├── PL_J2D_HealthcareIngest.json      # ADF pipeline (importable JSON)
-│   └── TRG_Weekly_Healthcare_Ingest.json # Weekly schedule trigger
+├── Databricks_Notebooks/
+│   ├── Create_Tables.py                  # Silver Delta table DDL
+│   ├── Helper_NB.py                      # Shared utility functions
+│   ├── Raw_NB.py                         # Raw → Bronze layer notebook
+│   ├── Silver_NB.py                      # Bronze → Silver layer notebook
+│   └── Gold_NB.py                        # Silver → Gold layer notebook
 │
 ├── Documentation/
-│   ├── Project_README.md                         # This file
 │   ├── Architecture_and_Runbook.md               # Step-by-step setup guide
 │   ├── Team_Roles_and_Tasks.md                   # Role-based task breakdown
-│   └── J2D_Healthcare_Project_Documentation.docx # Combined Word document
+│   └── (Other guides, PPTs, HTML tools)          # Checklists and documentation
 │
-└── Source_Data/
-    ├── Hospital_events_January_2026.csv
-    ├── Device_events_January_2026.csv
-    └── Pharma_events_January_2026.csv
+├── Logic_Apps/
+│   └── LA_PipelineFailure_Email.json     # Logic workflow for error alerts
+│
+├── Sample_Data/
+│   ├── Hospital_events_January_2026.csv
+│   ├── Device_events_January_2026.csv
+│   └── Pharma_events_January_2026.csv
+│
+└── README.md                             # This overview file
 ```
 
 ---
