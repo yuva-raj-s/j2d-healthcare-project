@@ -4,37 +4,132 @@
 -- Target DB : j2d_pharma_db
 -- Table     : pharma_events
 -- Run this in pgAdmin or Azure Cloud Shell (psql)
+-- Source    : Pharma_events_January_2026.csv
+-- Columns   : medicine_id, medicine_name, category, hospital_id,
+--             total_stock, issued_stock, expiry_date
 -- ============================================================
 
--- STEP 1: Create the database
+-- STEP 1: Create the database (run as superuser if needed)
 -- CREATE DATABASE j2d_pharma_db;
 -- \c j2d_pharma_db
 
--- STEP 2: Create the pharma_events table
+-- STEP 2: Create the pharma_events table (schema matches CSV exactly)
 DROP TABLE IF EXISTS pharma_events CASCADE;
 
 CREATE TABLE pharma_events (
-    hospital_id           VARCHAR(20)  NOT NULL,
-    medicine_id           VARCHAR(20)  NOT NULL,
-    medicine_name         VARCHAR(100),
-    category              VARCHAR(50),
-    total_stock           INT,
-    available_stock       INT,
-    reorder_level         INT,
-    expiry_date           DATE,
-    supplier_id           VARCHAR(20),
-    report_week           VARCHAR(10),
+    medicine_id     VARCHAR(20)  NOT NULL,
+    medicine_name   VARCHAR(100),
+    category        VARCHAR(50),
+    hospital_id     VARCHAR(20)  NOT NULL,
+    total_stock     INT,
+    issued_stock    INT,
+    expiry_date     DATE,
     PRIMARY KEY (hospital_id, medicine_id)
 );
 
--- STEP 3: Load data (run COPY from CSV via psql or import wizard)
--- COPY pharma_events (hospital_id, medicine_id, medicine_name, category, total_stock, available_stock, reorder_level, expiry_date, supplier_id, report_week)
--- FROM '/path/to/Pharma_events_January_2026.csv'
--- DELIMITER ','
--- CSV HEADER;
-
--- Option B – Use Azure Data Factory to copy directly (recommended if data is huge)
--- ADF Copy Activity will copy from PostgreSQL to ADLS staging via Linked Service.
+-- STEP 3: Insert all 100 rows (10 hospitals x 10 medicines)
+-- Source: Pharma_events_January_2026.csv
+INSERT INTO pharma_events (medicine_id, medicine_name, category, hospital_id, total_stock, issued_stock, expiry_date) VALUES
+('MED001','Paracetamol','Painkiller','H01',4077,4043,'2026-06-23'),
+('MED002','Insulin','Diabetes','H01',4802,3541,'2026-06-16'),
+('MED003','Ceftriaxone','Antibiotic','H01',1044,1004,'2026-03-14'),
+('MED004','Morphine','Critical Care','H01',2242,1651,'2026-01-05'),
+('MED005','Heparin','Critical Care','H01',4191,3960,'2026-04-24'),
+('MED006','Amoxicillin','Antibiotic','H01',1619,1555,'2025-08-14'),
+('MED007','Salbutamol','Respiratory','H01',4521,3632,'2026-03-12'),
+('MED008','Metformin','Diabetes','H01',5660,4097,'2025-09-22'),
+('MED009','Aspirin','Painkiller','H01',2055,1624,'2025-12-04'),
+('MED010','Atorvastatin','Cardiac','H01',2397,2346,'2026-02-24'),
+('MED001','Paracetamol','Painkiller','H02',2222,1814,'2025-12-10'),
+('MED002','Insulin','Diabetes','H02',5130,4394,'2026-02-04'),
+('MED003','Ceftriaxone','Antibiotic','H02',3946,3235,'2025-09-28'),
+('MED004','Morphine','Critical Care','H02',1593,1176,'2026-02-28'),
+('MED005','Heparin','Critical Care','H02',2116,1819,'2026-04-27'),
+('MED006','Amoxicillin','Antibiotic','H02',1035,966,'2026-02-05'),
+('MED007','Salbutamol','Respiratory','H02',2284,1906,'2025-08-03'),
+('MED008','Metformin','Diabetes','H02',2736,2094,'2026-02-15'),
+('MED009','Aspirin','Painkiller','H02',1763,1482,'2025-12-11'),
+('MED010','Atorvastatin','Cardiac','H02',3504,3202,'2026-03-06'),
+('MED001','Paracetamol','Painkiller','H03',2293,1936,'2025-08-14'),
+('MED002','Insulin','Diabetes','H03',1779,1497,'2026-02-01'),
+('MED003','Ceftriaxone','Antibiotic','H03',1082,1080,'2025-12-01'),
+('MED004','Morphine','Critical Care','H03',1999,1463,'2025-11-18'),
+('MED005','Heparin','Critical Care','H03',4874,4377,'2025-12-08'),
+('MED006','Amoxicillin','Antibiotic','H03',5427,4922,'2025-08-11'),
+('MED007','Salbutamol','Respiratory','H03',4253,4138,'2026-02-24'),
+('MED008','Metformin','Diabetes','H03',3115,2434,'2026-03-08'),
+('MED009','Aspirin','Painkiller','H03',1143,1060,'2026-04-19'),
+('MED010','Atorvastatin','Cardiac','H03',4727,4620,'2025-09-15'),
+('MED001','Paracetamol','Painkiller','H04',732,582,'2026-01-21'),
+('MED002','Insulin','Diabetes','H04',4206,3892,'2025-12-09'),
+('MED003','Ceftriaxone','Antibiotic','H04',654,509,'2025-09-12'),
+('MED004','Morphine','Critical Care','H04',2265,1789,'2026-02-05'),
+('MED005','Heparin','Critical Care','H04',971,856,'2026-02-15'),
+('MED006','Amoxicillin','Antibiotic','H04',5910,4524,'2026-06-12'),
+('MED007','Salbutamol','Respiratory','H04',5581,4321,'2025-11-25'),
+('MED008','Metformin','Diabetes','H04',3582,2613,'2026-01-04'),
+('MED009','Aspirin','Painkiller','H04',3904,2976,'2026-02-11'),
+('MED010','Atorvastatin','Cardiac','H04',4355,3113,'2025-10-07'),
+('MED001','Paracetamol','Painkiller','H05',332,246,'2025-10-02'),
+('MED002','Insulin','Diabetes','H05',4282,3211,'2025-10-04'),
+('MED003','Ceftriaxone','Antibiotic','H05',3063,2228,'2026-05-17'),
+('MED004','Morphine','Critical Care','H05',5198,4277,'2026-01-03'),
+('MED005','Heparin','Critical Care','H05',2174,1542,'2025-09-11'),
+('MED006','Amoxicillin','Antibiotic','H05',5102,4815,'2026-03-03'),
+('MED007','Salbutamol','Respiratory','H05',1953,1610,'2025-11-09'),
+('MED008','Metformin','Diabetes','H05',2429,2347,'2026-05-17'),
+('MED009','Aspirin','Painkiller','H05',5873,4889,'2025-10-12'),
+('MED010','Atorvastatin','Cardiac','H05',646,542,'2026-02-21'),
+('MED001','Paracetamol','Painkiller','H06',764,554,'2025-10-21'),
+('MED002','Insulin','Diabetes','H06',1760,1335,'2026-04-29'),
+('MED003','Ceftriaxone','Antibiotic','H06',2467,1915,'2026-01-14'),
+('MED004','Morphine','Critical Care','H06',4605,3884,'2025-08-15'),
+('MED005','Heparin','Critical Care','H06',3084,2803,'2026-01-19'),
+('MED006','Amoxicillin','Antibiotic','H06',3217,2910,'2026-06-02'),
+('MED007','Salbutamol','Respiratory','H06',5824,4228,'2025-10-14'),
+('MED008','Metformin','Diabetes','H06',846,808,'2026-05-30'),
+('MED009','Aspirin','Painkiller','H06',2693,2480,'2026-04-30'),
+('MED010','Atorvastatin','Cardiac','H06',3470,3186,'2026-02-26'),
+('MED001','Paracetamol','Painkiller','H07',3944,3350,'2025-12-27'),
+('MED002','Insulin','Diabetes','H07',467,401,'2025-08-31'),
+('MED003','Ceftriaxone','Antibiotic','H07',580,432,'2026-02-05'),
+('MED004','Morphine','Critical Care','H07',3441,3076,'2026-01-21'),
+('MED005','Heparin','Critical Care','H07',3022,2539,'2026-02-12'),
+('MED006','Amoxicillin','Antibiotic','H07',1340,1013,'2025-10-04'),
+('MED007','Salbutamol','Respiratory','H07',2377,1973,'2026-04-02'),
+('MED008','Metformin','Diabetes','H07',2563,2009,'2026-05-15'),
+('MED009','Aspirin','Painkiller','H07',3571,3259,'2025-08-20'),
+('MED010','Atorvastatin','Cardiac','H07',1016,875,'2025-09-02'),
+('MED001','Paracetamol','Painkiller','H08',2687,2082,'2025-10-09'),
+('MED002','Insulin','Diabetes','H08',4420,4073,'2025-10-08'),
+('MED003','Ceftriaxone','Antibiotic','H08',3948,3051,'2026-03-20'),
+('MED004','Morphine','Critical Care','H08',4738,4220,'2026-03-17'),
+('MED005','Heparin','Critical Care','H08',4685,4586,'2025-11-12'),
+('MED006','Amoxicillin','Antibiotic','H08',1486,1453,'2026-06-14'),
+('MED007','Salbutamol','Respiratory','H08',4448,3970,'2026-06-04'),
+('MED008','Metformin','Diabetes','H08',2907,2426,'2026-06-01'),
+('MED009','Aspirin','Painkiller','H08',4411,3922,'2026-01-25'),
+('MED010','Atorvastatin','Cardiac','H08',2392,1926,'2025-08-19'),
+('MED001','Paracetamol','Painkiller','H09',5414,4054,'2025-09-09'),
+('MED002','Insulin','Diabetes','H09',3359,3325,'2026-06-14'),
+('MED003','Ceftriaxone','Antibiotic','H09',2321,2269,'2025-11-12'),
+('MED004','Morphine','Critical Care','H09',4713,3928,'2026-01-16'),
+('MED005','Heparin','Critical Care','H09',4912,4703,'2026-05-19'),
+('MED006','Amoxicillin','Antibiotic','H09',3508,2479,'2025-11-06'),
+('MED007','Salbutamol','Respiratory','H09',2445,1910,'2025-10-30'),
+('MED008','Metformin','Diabetes','H09',4910,4544,'2026-02-17'),
+('MED009','Aspirin','Painkiller','H09',3227,2328,'2025-08-02'),
+('MED010','Atorvastatin','Cardiac','H09',3107,2888,'2025-08-03'),
+('MED001','Paracetamol','Painkiller','H10',3688,3642,'2026-03-18'),
+('MED002','Insulin','Diabetes','H10',3826,3108,'2026-02-16'),
+('MED003','Ceftriaxone','Antibiotic','H10',2963,2712,'2025-12-22'),
+('MED004','Morphine','Critical Care','H10',356,290,'2026-06-06'),
+('MED005','Heparin','Critical Care','H10',5238,4070,'2026-03-14'),
+('MED006','Amoxicillin','Antibiotic','H10',1300,985,'2025-10-17'),
+('MED007','Salbutamol','Respiratory','H10',1012,761,'2026-03-27'),
+('MED008','Metformin','Diabetes','H10',699,674,'2026-01-05'),
+('MED009','Aspirin','Painkiller','H10',2481,2083,'2025-10-18'),
+('MED010','Atorvastatin','Cardiac','H10',4794,3824,'2026-04-23');
 
 -- STEP 4: Create a dedicated ADF user (least-privilege)
 -- CREATE USER adf_user WITH PASSWORD 'J2D@Adf2026!';
@@ -43,14 +138,5 @@ CREATE TABLE pharma_events (
 -- GRANT SELECT ON ALL TABLES IN SCHEMA public TO adf_user;
 
 -- STEP 5: Verify
--- SELECT COUNT(*) AS total_records FROM pharma_events;
--- SELECT * FROM pharma_events LIMIT 5;
-
--- ============================================================
--- REFERENCE: Sample INSERT for manual testing (first 3 rows)
--- ============================================================
-INSERT INTO pharma_events VALUES
-('H1', 'MED001', 'Paracetamol 500mg', 'Analgesic', 5000, 1500, 1000, '2026-12-31', 'SUPP01', 'W1'),
-('H1', 'MED002', 'Amoxicillin 250mg', 'Antibiotic', 2000, 400, 500, '2026-06-30', 'SUPP02', 'W1'),
-('H2', 'MED003', 'Ibuprofen 400mg', 'Analgesic', 3000, 2500, 800, '2026-10-15', 'SUPP03', 'W1');
--- Note: MED002 available_stock < reorder_level logic validation.
+SELECT COUNT(*) AS total_records FROM pharma_events;
+SELECT * FROM pharma_events LIMIT 5;
