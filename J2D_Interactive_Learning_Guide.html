@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>J2D Healthcare – Azure Data Engineering Learning Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root{
+  --bg:#0b0f1a;--surface:#111827;--surface2:#1a2234;--surface3:#202d42;
+  --border:#1e2d45;--border2:#243551;
+  --accent:#38bdf8;--accent-dim:rgba(56,189,248,.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.1);
+  --green:#34d399;--green-dim:rgba(52,211,153,.1);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.1);
+  --red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,.1);
+  --coral:#fb7185;--coral-dim:rgba(251,113,133,.1);
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(11,15,26,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 20px;height:54px;
+}
+.logo{font-size:15px;font-weight:700;color:var(--accent);letter-spacing:-.3px;white-space:nowrap}
+.logo span{color:var(--text2);font-weight:400}
+.tab-row{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none}
+.tab-row::-webkit-scrollbar{display:none}
+.tab{
+  padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:500;
+  color:var(--text3);transition:all .18s;white-space:nowrap;border:none;background:none;
+  font-family:var(--sans);
+}
+.tab:hover{color:var(--text2);background:var(--surface2)}
+.tab.active{color:var(--accent);background:var(--accent-dim)}
+.mode-toggle{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 8px;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;
+  transition:all .18s;
+}
+.mode-toggle:hover{border-color:var(--border2);color:var(--text)}
+.mode-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.progress-ring{width:36px;height:36px;cursor:pointer;flex-shrink:0}
+
+/* ─── LAYOUT ─── */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh;padding-top:54px}
+
+/* ─── SIDEBAR ─── */
+.sidebar{
+  border-right:1px solid var(--border);padding:20px 0;
+  position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.nav-group{margin-bottom:6px}
+.nav-group-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text3);padding:10px 16px 4px;
+}
+.nav-link{
+  display:flex;align-items:center;gap:10px;padding:7px 16px;
+  cursor:pointer;font-size:12.5px;font-weight:500;color:var(--text3);
+  transition:all .15s;border-left:2px solid transparent;text-decoration:none;
+}
+.nav-link:hover{color:var(--text2);background:var(--surface2);border-left-color:var(--border2)}
+.nav-link.active{color:var(--accent);background:var(--accent-dim);border-left-color:var(--accent)}
+.nav-link.done{color:var(--green)}
+.nav-link.done .nav-icon{color:var(--green)}
+.nav-icon{font-style:normal;font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{
+  margin-left:auto;font-size:9px;font-weight:700;
+  background:var(--surface3);color:var(--text3);
+  padding:2px 6px;border-radius:10px;
+}
+.nav-link.done .nav-badge{background:var(--green-dim);color:var(--green)}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);margin-top:8px}
+.prog-label{font-size:11px;color:var(--text3);margin-bottom:6px}
+.prog-bar{height:4px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:4px;transition:width .4s ease}
+.prog-text{font-size:11px;color:var(--text2);margin-top:5px;font-weight:600}
+
+/* ─── CONTENT ─── */
+.content{padding:0;min-width:0}
+
+/* ─── SECTIONS (tabs) ─── */
+.section{display:none;padding:32px 36px;max-width:900px}
+.section.active{display:block}
+
+/* ─── HERO (overview section) ─── */
+.hero-band{
+  background:linear-gradient(135deg,#0b0f1a 0%,#0f1d35 60%,#0b0f1a 100%);
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:32px;margin-bottom:28px;position:relative;overflow:hidden;
+}
+.hero-band::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 50% 80% at 80% 50%,rgba(56,189,248,.07) 0%,transparent 70%),
+            radial-gradient(ellipse 40% 60% at 20% 50%,rgba(167,139,250,.06) 0%,transparent 70%);
+}
+.hero-inner{position:relative;z-index:1}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent-dim);border:1px solid rgba(56,189,248,.25);
+  color:var(--accent);font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 12px;border-radius:100px;margin-bottom:14px;
+}
+.hero-title{font-size:2rem;font-weight:800;line-height:1.15;margin-bottom:8px}
+.hero-title em{color:var(--accent);font-style:normal}
+.hero-sub{color:var(--text2);font-size:14px;line-height:1.7;max-width:620px;margin-bottom:20px}
+.pipe-flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.pf-node{
+  font-family:var(--mono);font-size:10.5px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text2);padding:4px 10px;border-radius:6px;white-space:nowrap;
+}
+.pf-node.hi{border-color:rgba(56,189,248,.35);color:var(--accent)}
+.pf-arrow{color:var(--text3);font-size:12px}
+
+/* quick stats strip */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+}
+.stat-num{font-size:22px;font-weight:800;color:var(--text);line-height:1}
+.stat-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:500}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ─── CONCEPT MAP (expandable) ─── */
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.concept-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;
+}
+.concept-card:hover{border-color:var(--border2);background:var(--surface2)}
+.concept-card.open{border-color:var(--accent);background:var(--accent-dim)}
+.concept-card-head{display:flex;align-items:center;gap:10px}
+.concept-icon{font-size:22px}
+.concept-title{font-size:13px;font-weight:700;color:var(--text)}
+.concept-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.concept-body{
+  display:none;margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--border2);
+  font-size:12.5px;color:var(--text2);line-height:1.8;
+}
+.concept-card.open .concept-body{display:block}
+.concept-why,.concept-what,.concept-how{margin-bottom:8px}
+.label-why{color:var(--amber);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.label-what{color:var(--accent);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.label-how{color:var(--green);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+
+/* ─── SECTION HEADINGS ─── */
+.sec-head{margin-bottom:24px}
+.sec-tag{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 10px;border-radius:4px;margin-bottom:8px;
+}
+.sec-title{font-size:1.5rem;font-weight:800;line-height:1.2}
+.sec-desc{color:var(--text2);font-size:13.5px;margin-top:6px;line-height:1.7}
+
+/* ─── PHASE STEPS ─── */
+.phase-block{margin-bottom:10px}
+.phase-accordion{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;transition:border-color .2s;
+}
+.phase-accordion:hover{border-color:var(--border2)}
+.phase-accordion.open{border-color:var(--accent)}
+.phase-accordion.done{border-color:var(--green)}
+
+.phase-trigger{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;
+  cursor:pointer;user-select:none;
+}
+.ph-num{
+  width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex-shrink:0;
+  background:var(--surface2);color:var(--text3);border:1px solid var(--border);
+  transition:all .2s;
+}
+.phase-accordion.open .ph-num{background:var(--accent-dim);color:var(--accent);border-color:rgba(56,189,248,.3)}
+.phase-accordion.done .ph-num{background:var(--green-dim);color:var(--green);border-color:rgba(52,211,153,.3)}
+.ph-info{flex:1;min-width:0}
+.ph-title{font-size:14px;font-weight:700;color:var(--text)}
+.ph-desc{font-size:11.5px;color:var(--text3);margin-top:2px}
+.ph-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.ph-tag{
+  font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;
+}
+.tag-why{background:var(--amber-dim);color:var(--amber)}
+.tag-beginner{background:var(--green-dim);color:var(--green)}
+.tag-advanced{background:var(--purple-dim);color:var(--purple)}
+.tag-config{background:var(--accent-dim);color:var(--accent)}
+.tag-run{background:var(--teal-dim);color:var(--teal)}
+.tag-verify{background:var(--coral-dim);color:var(--coral)}
+
+.ph-right{display:flex;align-items:center;gap:8px}
+.ph-est{font-size:10.5px;color:var(--text3)}
+.ph-chevron{color:var(--text3);font-size:12px;transition:transform .25s;font-style:normal}
+.phase-accordion.open .ph-chevron{transform:rotate(90deg)}
+
+.phase-body{display:none;padding:0 18px 20px}
+.phase-accordion.open .phase-body{display:block}
+
+/* ─── LEARN TABS (why/what/how) inside phase ─── */
+.learn-tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0}
+.ltab{
+  padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;
+  color:var(--text3);border-bottom:2px solid transparent;transition:all .18s;
+  background:none;border-top:none;border-left:none;border-right:none;
+  font-family:var(--sans);
+}
+.ltab:hover{color:var(--text2)}
+.ltab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ltab-content{display:none}
+.ltab-content.active{display:block}
+.ltab-pane{padding:12px 0 4px}
+
+/* ─── CALLOUTS ─── */
+.callout{
+  border-radius:8px;padding:11px 14px;font-size:12.5px;margin:10px 0;
+  border-left:3px solid;display:flex;gap:10px;line-height:1.7;
+}
+.callout-icon{flex-shrink:0;font-style:normal;font-size:15px;line-height:1.5}
+.callout.why{background:var(--amber-dim);border-color:var(--amber);color:#fde68a}
+.callout.tip{background:var(--green-dim);border-color:var(--green);color:#a7f3d0}
+.callout.warn{background:var(--red-dim);border-color:var(--red);color:#fca5a5}
+.callout.note{background:var(--accent-dim);border-color:var(--accent);color:#bae6fd}
+.callout.industry{background:var(--purple-dim);border-color:var(--purple);color:#ddd6fe}
+
+/* ─── CODE BLOCKS ─── */
+.code-wrap{position:relative;margin:10px 0}
+pre{
+  font-family:var(--mono);font-size:12px;
+  background:#0d1117;border:1px solid var(--border);border-radius:8px;
+  padding:14px;overflow-x:auto;color:#a5b4c8;line-height:1.75;
+}
+.ck{color:#7dd3fc}.cv{color:#86efac}.cc{color:#3d5166;font-style:italic}
+.cs{color:#fde68a}.cm{color:#f9a8d4}.co{color:#fcd34d}
+.copy-btn{
+  position:absolute;top:8px;right:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text3);font-family:var(--sans);font-size:10px;font-weight:600;
+  padding:3px 9px;border-radius:5px;cursor:pointer;transition:all .18s;
+}
+.copy-btn:hover{background:var(--surface3);color:var(--text2)}
+.copy-btn.ok{color:var(--green);border-color:var(--green)}
+
+/* ─── TABLES ─── */
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0;border-radius:8px;overflow:hidden}
+th{background:var(--surface2);color:var(--text2);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--border)}
+td{padding:7px 12px;border:1px solid var(--border);color:var(--text2);vertical-align:top}
+tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+code{font-family:var(--mono);font-size:11.5px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:#93c5fd}
+
+/* ─── CHECKLIST ─── */
+.checklist{list-style:none;padding:0;margin:8px 0}
+.ci{display:flex;align-items:flex-start;gap:9px;padding:6px 0;font-size:12.5px;color:var(--text2);cursor:pointer;transition:color .15s;border-bottom:1px solid rgba(255,255,255,.03)}
+.ci:hover{color:var(--text)}
+.ci.checked{color:var(--text3);text-decoration:line-through}
+.chk{
+  width:17px;height:17px;border:1px solid var(--border2);border-radius:4px;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--surface2);font-size:10px;transition:all .15s;margin-top:2px;
+}
+.ci.checked .chk{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+
+/* ─── MARK DONE ─── */
+.done-btn{
+  margin-top:14px;padding:8px 18px;border-radius:8px;cursor:pointer;
+  font-family:var(--sans);font-size:12.5px;font-weight:600;
+  background:var(--green-dim);border:1px solid rgba(52,211,153,.3);color:var(--green);
+  transition:all .2s;
+}
+.done-btn:hover{background:rgba(52,211,153,.2)}
+.phase-accordion.done .done-btn{opacity:.6}
+
+/* ─── ANALOGY BOX ─── */
+.analogy{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:14px 16px;margin:10px 0;
+  font-size:12.5px;color:var(--text2);line-height:1.8;
+}
+.analogy-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-weight:700;font-size:13px;color:var(--text)}
+.analogy-icon{font-size:18px}
+
+/* ─── QUICK REF ─── */
+.ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.ref-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+}
+.ref-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ref-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:11.5px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.ref-key{color:var(--text3);flex-shrink:0;margin-right:8px}
+.ref-val{color:var(--text2);font-family:var(--mono);font-size:10.5px;text-align:right}
+
+/* ─── DOC VIEWER (reference panel) ─── */
+.doc-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden;
+}
+.doc-panel-head{
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+}
+.doc-panel-icon{font-size:20px}
+.doc-panel-title{font-size:13px;font-weight:700;color:var(--text)}
+.doc-panel-sub{font-size:11px;color:var(--text3)}
+.doc-toc{padding:16px}
+.doc-toc-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.doc-part{margin-bottom:14px}
+.doc-part-label{font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:5px}
+.doc-item{
+  font-size:12px;color:var(--text2);padding:4px 10px;border-radius:5px;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.doc-item:hover{background:var(--surface2);color:var(--text)}
+.doc-item::before{content:'▸';color:var(--text3);font-size:10px}
+.doc-content{
+  display:none;padding:20px;border-top:1px solid var(--border);
+  font-size:12.5px;color:var(--text2);line-height:1.85;max-height:500px;overflow-y:auto;
+}
+.doc-content.active{display:block}
+.doc-content h3{font-size:14px;font-weight:700;color:var(--text);margin:14px 0 6px}
+.doc-content h4{font-size:12px;font-weight:700;color:var(--accent);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+.doc-content p{margin-bottom:8px}
+.doc-content ul{padding-left:16px;margin-bottom:8px}
+.doc-content li{margin-bottom:3px}
+
+/* ─── INDUSTRY PRACTICES ─── */
+.practices-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.prac-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px;
+}
+.prac-icon{font-size:18px;margin-bottom:6px}
+.prac-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
+.prac-desc{font-size:11px;color:var(--text3);line-height:1.6}
+
+/* ─── SCHEMA VIEWER ─── */
+.schema-view{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.schema-table{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.schema-head{background:var(--surface3);padding:7px 10px;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.schema-head.fact{color:var(--coral)}
+.schema-head.dim{color:var(--accent)}
+.schema-row{padding:4px 10px;font-size:11px;font-family:var(--mono);display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.03)}
+.col-type{color:var(--text3);font-size:10px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .section{padding:20px 16px}
+  .stats-strip{grid-template-columns:1fr 1fr}
+  .concept-grid,.ref-grid,.practices-grid{grid-template-columns:1fr}
+  .hero-title{font-size:1.5rem}
+}
+
+/* ─── MODE classes ─── */
+body.beginner-mode .advanced-only{display:none}
+body.advanced-mode .beginner-only{display:none}
+
+/* ─── Divider ─── */
+.divider{height:1px;background:var(--border);margin:20px 0}
+h3.sub-h{font-size:14px;font-weight:700;color:var(--text);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+p.body-text{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:10px}
+ul.body-list{font-size:13px;color:var(--text2);padding-left:18px;margin-bottom:10px}
+ul.body-list li{margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TOPBAR ═══════════ -->
+<div class="topbar">
+  <div class="logo">J2D <span>Healthcare</span></div>
+  <div class="tab-row">
+    <button class="tab active" onclick="showSection('overview',this)">🏠 Overview</button>
+    <button class="tab" onclick="showSection('concepts',this)">🧠 Concepts</button>
+    <button class="tab" onclick="showSection('guide',this)">📋 Step-by-Step Guide</button>
+    <button class="tab" onclick="showSection('schema',this)">🗄️ Data Model</button>
+    <button class="tab" onclick="showSection('roles',this)">👥 Team Roles</button>
+    <button class="tab" onclick="showSection('reference',this)">📚 Quick Reference</button>
+    <button class="tab" onclick="showSection('docs',this)">📄 Full Docs</button>
+  </div>
+  <div class="mode-toggle" onclick="toggleMode()" id="modeBtn">
+    <span class="mode-dot"></span><span id="modeLabel">Beginner</span>
+  </div>
+  <svg class="progress-ring" viewBox="0 0 36 36" onclick="showSection('guide',document.querySelector('.tab:nth-child(3)'))">
+    <circle cx="18" cy="18" r="15" fill="none" stroke="#1e2d45" stroke-width="3"/>
+    <circle id="ringCircle" cx="18" cy="18" r="15" fill="none" stroke="#38bdf8" stroke-width="3"
+      stroke-dasharray="94 94" stroke-dashoffset="94" stroke-linecap="round"
+      transform="rotate(-90 18 18)" style="transition:stroke-dashoffset .4s"/>
+    <text x="18" y="22" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="Plus Jakarta Sans,sans-serif" font-weight="700" id="ringText">0%</text>
+  </svg>
+</div>
+
+<!-- ═══════════ LAYOUT ═══════════ -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-group">
+      <div class="nav-group-label">Navigate</div>
+      <a class="nav-link active" onclick="showSection('overview',null)"><em class="nav-icon">🏠</em>Overview</a>
+      <a class="nav-link" onclick="showSection('concepts',null)"><em class="nav-icon">🧠</em>Core Concepts</a>
+      <a class="nav-link" onclick="showSection('guide',null)"><em class="nav-icon">📋</em>Step-by-Step Guide</a>
+      <a class="nav-link" onclick="showSection('schema',null)"><em class="nav-icon">🗄️</em>Data Model</a>
+      <a class="nav-link" onclick="showSection('roles',null)"><em class="nav-icon">👥</em>Team & Roles</a>
+      <a class="nav-link" onclick="showSection('reference',null)"><em class="nav-icon">📚</em>Quick Reference</a>
+      <a class="nav-link" onclick="showSection('docs',null)"><em class="nav-icon">📄</em>Full Docs</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Pipeline Phases</div>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p1'),200)"><em class="nav-icon">🏗️</em>Resource Group<span class="nav-badge">1</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p2'),200)"><em class="nav-icon">🗄️</em>Source Databases<span class="nav-badge">2</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p3'),200)"><em class="nav-icon">🔐</em>Key Vault<span class="nav-badge">3</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p4'),200)"><em class="nav-icon">🔄</em>ADF + Pipeline<span class="nav-badge">4</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p5'),200)"><em class="nav-icon">💾</em>ADLS Layers<span class="nav-badge">5</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p6'),200)"><em class="nav-icon">⚡</em>Databricks<span class="nav-badge">6</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p7'),200)"><em class="nav-icon">📓</em>Medallion Run<span class="nav-badge">7</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p8'),200)"><em class="nav-icon">🏛️</em>Synapse<span class="nav-badge">8</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p9'),200)"><em class="nav-icon">📊</em>Power BI<span class="nav-badge">9</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p10'),200)"><em class="nav-icon">🔍</em>Verify & Monitor<span class="nav-badge">10</span></a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="prog-label">Setup progress</div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div class="prog-text" id="progText">0 / 0 phases done</div>
+    </div>
+  </aside>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: OVERVIEW
+════════════════════════════════════════════════ -->
+<div class="content">
+<div id="sec-overview" class="section active">
+
+  <div class="hero-band">
+    <div class="hero-inner">
+      <div class="hero-pill"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite"></span>Azure Data Engineering</div>
+      <div class="hero-title">J2D Healthcare<br><em>End-to-End Data Pipeline</em></div>
+      <div class="hero-sub">A complete industry-standard healthcare data pipeline built on Microsoft Azure — from raw hospital records in 3 different databases all the way to live Power BI dashboards. Designed to be Azure Free Trial compatible (~$35–43/month).</div>
+      <div class="pipe-flow">
+        <div class="pf-node">MySQL · SQL · PostgreSQL</div><div class="pf-arrow">→</div>
+        <div class="pf-node hi">ADF Ingest</div><div class="pf-arrow">→</div>
+        <div class="pf-node">ADLS Raw</div><div class="pf-arrow">→</div>
+        <div class="pf-node">Databricks</div><div class="pf-arrow">→</div>
+        <div class="pf-node hi">Bronze → Silver → Gold</div><div class="pf-arrow">→</div>
+        <div class="pf-node">Synapse SQL</div><div class="pf-arrow">→</div>
+        <div class="pf-node hi">Power BI</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">3</div><div class="stat-label">Source Systems</div><div class="stat-sub">MySQL · Azure SQL · PostgreSQL</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--purple)">~1,150</div><div class="stat-label">Total Records</div><div class="stat-sub">Hospital · Device · Pharma</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">10</div><div class="stat-label">Silver Tables</div><div class="stat-sub">6 dim + 4 fact</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">7</div><div class="stat-label">Gold Business Views</div><div class="stat-sub">4-page Power BI dashboard</div></div>
+  </div>
+
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--accent-dim);color:var(--accent)">What this project covers</div>
+    <div class="sec-title">The Full Picture</div>
+    <div class="sec-desc">Click any card below to understand what each technology does in this project, why it's there, and how it connects to the next layer.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🏗️</div><div><div class="concept-title">Azure Resource Group</div><div class="concept-sub">Container for everything</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>Every Azure service needs to live somewhere. A Resource Group is a logical boundary — billing, access control, and deletion all happen at this level. Deleting the RG wipes everything at once, handy for cleanup.</div>
+        <div class="concept-what"><span class="label-what">What</span><br><code>rg-j2d-healthcare</code> — holds all 8+ Azure services in this project: DBs, ADF, ADLS, Databricks, Synapse, Key Vault.</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Created first. Every other service in this guide gets created inside this RG.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🔄</div><div><div class="concept-title">Azure Data Factory</div><div class="concept-sub">Orchestrator & data mover</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>You have data in 3 different databases in 3 different formats. ADF moves it all to a central lake without you writing a single line of extraction code. It also sequences notebook runs so Bronze → Silver → Gold happens in the right order.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>A no-code/low-code ETL orchestration service. Think of it as a workflow manager — it has a visual pipeline builder, scheduled triggers, and monitors every run.</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Weekly trigger fires every Monday 6AM IST → runs 3 Copy Activities in parallel → then chains Raw_NB → Silver_NB → Gold_NB in Databricks.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">💾</div><div><div class="concept-title">ADLS Gen2 (Medallion Layers)</div><div class="concept-sub">Central data lake storage</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>You need one place to accumulate data across time. ADLS Gen2 is cheap, hierarchical (like a file system), and natively integrates with both Databricks and Synapse. The medallion pattern (Raw → Bronze → Gold) gives you auditable, recoverable data at every stage.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>3 containers: <code>rawlayer</code> (CSVs from ADF), <code>bronzelayer</code> (validated Parquet), <code>goldlayer</code> (aggregated Parquet for BI).</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>ADF writes CSVs to rawlayer → Databricks reads raw, writes validated Parquet to bronzelayer → Gold_NB writes business aggregations to goldlayer → Synapse reads goldlayer.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">⚡</div><div><div class="concept-title">Azure Databricks (PySpark)</div><div class="concept-sub">Distributed data transformation engine</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>Transforming 1,000+ healthcare records requires joins across 3 source systems, schema validation, deduplication, and aggregation. PySpark can handle this at any scale, and Delta tables give ACID guarantees — crucial for healthcare data accuracy.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>4 Python notebooks: <code>Helper_NB</code> (utilities), <code>Raw_NB</code> (validate → bronze), <code>Silver_NB</code> (model into 10 tables), <code>Gold_NB</code> (aggregate into 7 outputs).</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Each notebook is triggered by ADF in sequence. They all write audit records to <code>J2D_Audit_table</code> so every run is traceable.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🏛️</div><div><div class="concept-title">Azure Synapse (Serverless SQL)</div><div class="concept-sub">SQL layer over the data lake</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>Power BI doesn't natively read Parquet from ADLS. Synapse Serverless SQL acts as a virtual query engine — it reads Parquet files on the fly using OPENROWSET, exposes them as SQL views, and Power BI connects to those views via a standard SQL endpoint. No data duplication. Cost: ~$1/month.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>External tables + 6 business views: Finance, Admissions, Device Utilization, Medicine Stock, Claim Status, Rejected Claims.</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Reads goldlayer Parquet via Managed Identity → Power BI connects DirectQuery to <code>j2d-synapse-ondemand.sql.azuresynapse.net</code>.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">📊</div><div><div class="concept-title">Power BI Desktop</div><div class="concept-sub">Business intelligence layer</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>The whole point of the pipeline is actionable insights. Hospital administrators need to see: which departments are overwhelmed, which insurers reject the most claims, which medicines are near expiry. Power BI translates raw aggregations into visual decisions.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>4-page dashboard — Hospital Overview, Finance & Claims, Device Utilization, Pharma Inventory — with 20+ visuals in DirectQuery mode (always live).</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Connects to Synapse Serverless SQL endpoint → loads 6 views → visuals refresh automatically when new pipeline data lands.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🏭</span>Think of it like a factory assembly line</div>
+    Raw materials (hospital records in 3 databases) → QC inspection (Raw_NB validates every field) → machining (Silver_NB builds the relational model) → finished goods warehouse (Gold Parquet in ADLS) → showroom (Power BI dashboard). ADF is the conveyor belt. Databricks is the machinery. Synapse is the inventory system. Power BI is the customer-facing showroom.
+  </div>
+
+</div><!-- /overview -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: CONCEPTS
+════════════════════════════════════════════════ -->
+<div id="sec-concepts" class="section">
+
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--purple-dim);color:var(--purple)">Learn the fundamentals</div>
+    <div class="sec-title">Core Concepts</div>
+    <div class="sec-desc">Everything you need to understand before building. Perfect for new learners — skip to the Guide if you're already familiar.</div>
+  </div>
+
+  <h3 class="sub-h">🥇 The Medallion Architecture</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">💡</span>Why medallion? Why not just one layer?</div>
+    Imagine copying patient records directly from a hospital system into a Power BI report. What happens when the doctor typo'd a date? Or a device ID was missing? Your report shows garbage. The medallion pattern adds checkpoints — each layer validates and enriches, so you always have a clean, traceable path back to the source.
+  </div>
+  <table>
+    <tr><th>Layer</th><th>What it is</th><th>Format</th><th>Who writes it</th><th>Quality</th></tr>
+    <tr><td><strong style="color:var(--amber)">Raw</strong></td><td>Exact copy from source systems</td><td>CSV</td><td>ADF Copy Activity</td><td>Unvalidated — exactly as-is</td></tr>
+    <tr><td><strong style="color:var(--accent)">Bronze</strong></td><td>Validated, typed, null-checked</td><td>Parquet</td><td>Raw_NB.py</td><td>Schema validated, fail-fast</td></tr>
+    <tr><td><strong style="color:var(--text2)">Silver</strong></td><td>Modelled into dim/fact tables</td><td>Delta</td><td>Silver_NB.py</td><td>Cleansed, deduplicated, joined</td></tr>
+    <tr><td><strong style="color:var(--amber)">Gold</strong></td><td>Business aggregations</td><td>Parquet</td><td>Gold_NB.py</td><td>Ready for BI consumption</td></tr>
+  </table>
+
+  <h3 class="sub-h">🔗 Linked Services — the glue of ADF</h3>
+  <p class="body-text">A <strong>Linked Service</strong> is ADF's way of storing a connection to an external system. Think of it as a saved password + connection string. Once created, you reuse it across multiple pipelines without re-entering credentials.</p>
+  <p class="body-text">A <strong>Dataset</strong> is built on top of a Linked Service — it specifies <em>which table or file path</em> within that connection. Linked Service = the door; Dataset = the specific room inside.</p>
+  <div class="callout industry"><span class="callout-icon">🏢</span><div><strong>Industry note:</strong> In production, Linked Service credentials are always stored in Azure Key Vault, not hardcoded. ADF fetches the secret at runtime. This project follows that pattern.</div></div>
+
+  <h3 class="sub-h">🔑 Why Delta Tables in Silver, not Parquet?</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">💡</span>Parquet vs Delta Lake</div>
+    Regular Parquet files are immutable — you can't update or delete individual rows. Delta Lake adds an ACID transaction log on top of Parquet. This means if a hospital re-sends corrected records, you can run <code>MERGE</code> to update only the changed rows, not rewrite the entire dataset. For healthcare data (where corrections happen), this matters.
+  </div>
+  <p class="body-text">Gold layer writes plain Parquet (not Delta) because Synapse Serverless SQL reads Parquet natively with OPENROWSET. Delta format adds extra files that confuse Synapse's external table reader.</p>
+
+  <h3 class="sub-h">📐 Star Schema — fact and dimension tables</h3>
+  <p class="body-text">The Silver layer implements a <strong>star schema</strong> — the standard relational model for analytics. Dimension tables hold descriptive attributes (who, what, where). Fact tables hold measurable events (what happened, when, how much).</p>
+  <p class="body-text">Example: <code>fact_admission</code> stores one row per hospital visit with foreign keys to <code>dim_patient</code>, <code>dim_doctor</code>, <code>dim_bed</code>, etc. This avoids repeating "Dr. Sharma" in every row — you store the doctor_id and join when needed.</p>
+
+  <h3 class="sub-h">⚡ Serverless SQL vs Dedicated SQL Pool</h3>
+  <table>
+    <tr><th></th><th>Serverless SQL (used here)</th><th>Dedicated SQL Pool</th></tr>
+    <tr><td>Cost</td><td>~$5/TB scanned — ~$1/month for this project</td><td>$720+/month minimum</td></tr>
+    <tr><td>Data storage</td><td>Reads from ADLS (no copy)</td><td>Has its own storage</td></tr>
+    <tr><td>Use case</td><td>Ad-hoc queries, Power BI views over lake</td><td>High-concurrency warehouse workloads</td></tr>
+    <tr><td>Startup</td><td>Instant — no cluster to start</td><td>No startup needed</td></tr>
+  </table>
+
+  <h3 class="sub-h">🔐 Managed Identity — no passwords in code</h3>
+  <p class="body-text">Azure services can authenticate to each other using <strong>Managed Identity</strong> — an auto-managed service principal. When Synapse reads from ADLS, it uses its Managed Identity instead of a username/password. You grant the identity "Storage Blob Data Reader" role on the storage account, and Azure handles the rest. No secrets in code, no rotation needed.</p>
+
+</div><!-- /concepts -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: GUIDE
+════════════════════════════════════════════════ -->
+<div id="sec-guide" class="section">
+
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--green-dim);color:var(--green)">Hands-on setup</div>
+    <div class="sec-title">Step-by-Step Build Guide</div>
+    <div class="sec-desc">Follow each phase in order. Click any phase to expand it. Each step includes the <em>Why</em> (concept), <em>What to do</em> (instructions), and a checklist to track progress.</div>
+  </div>
+
+  <!-- ───── PHASE 1 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p1">
+    <div class="phase-trigger" onclick="togglePhase('p1')">
+      <div class="ph-num">1</div>
+      <div class="ph-info">
+        <div class="ph-title">Azure Resource Group & Workspace Foundation</div>
+        <div class="ph-desc">Create the container that holds all project resources</div>
+        <div class="ph-tags"><span class="ph-tag tag-beginner">Beginner</span><span class="ph-tag tag-config">Portal</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~5 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p1')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p1')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p1')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>A Resource Group (RG) is like a project folder in Azure. Every resource — databases, ADF, Databricks, Synapse — lives inside it. You set billing, access control, and region once at the RG level instead of per-service. When the project is done, deleting the RG removes everything in one click. <strong>Always create the RG first.</strong></div></div>
+        <div class="callout note"><span class="callout-icon">ℹ️</span><div>You'll also create the Databricks workspace here — it takes ~3 minutes to provision, so start it early while you do other tasks.</div></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">1.1 Create Resource Group</h3>
+        <div class="code-wrap"><pre><span class="cc"># Azure Portal → Resource Groups → + Create</span>
+<span class="ck">Name           :</span> <span class="cs">rg-j2d-healthcare</span>
+<span class="ck">Region         :</span> <span class="cs">East US</span>  <span class="cc"># pick same region for all services</span>
+<span class="ck">Tags           :</span> <span class="cs">Project=J2D-Healthcare, Environment=Dev</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">1.2 Create Databricks Workspace</h3>
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Azure Databricks</span>
+<span class="ck">Workspace name :</span> <span class="cs">j2d-databricks</span>
+<span class="ck">Resource group :</span> <span class="cs">rg-j2d-healthcare</span>
+<span class="ck">Region         :</span> <span class="cs">East US</span>
+<span class="ck">Pricing tier   :</span> <span class="cs">Standard</span>  <span class="cc"># free trial compatible</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout tip"><span class="callout-icon">⏱️</span>Databricks workspace creation takes 3–5 min. Start it now, move to the next step while it deploys.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>rg-j2d-healthcare resource group created in East US</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks workspace j2d-databricks deployed successfully</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Can open Databricks Studio from the resource page</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p1')">✓ Phase 1 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 2 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p2">
+    <div class="phase-trigger" onclick="togglePhase('p2')">
+      <div class="ph-num">2</div>
+      <div class="ph-info">
+        <div class="ph-title">Source Databases — 3 Different Systems</div>
+        <div class="ph-desc">MySQL (Hospital) · Azure SQL (Devices) · PostgreSQL (Pharma)</div>
+        <div class="ph-tags"><span class="ph-tag tag-beginner">Beginner</span><span class="ph-tag tag-config">Portal + SQL</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~20 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p2')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p2')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p2')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>In real healthcare organisations, data lives in completely different systems built by different vendors. Hospital admissions in MySQL, medical devices tracked in a Microsoft SQL Server, pharmacy in PostgreSQL. This project intentionally uses all three to simulate that reality — and to demonstrate ADF's ability to connect to heterogeneous sources with separate Linked Services.</div></div>
+        <div class="analogy"><div class="analogy-head"><span class="analogy-icon">🏥</span>Real world parallel</div>The hospital's patient management system uses MySQL. The medical equipment manufacturer provided an Azure SQL database. The pharmacy software vendor chose PostgreSQL. The data engineering team's job is to unify all three — without touching the source systems.</div>
+        <div class="callout industry"><span class="callout-icon">🏢</span><strong>Industry:</strong> Using the cheapest SKUs (Burstable B1ms) and Serverless auto-pause keeps total DB cost under $35/month. In production you'd use at least 4 vCores with replicas, but for a dev/learning environment this is the right call.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">2.1 Azure MySQL — Hospital Events (~1,000 rows)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Azure Database for MySQL – Flexible Server</span>
+<span class="ck">Server name    :</span> <span class="cs">j2d-mysql-server</span>
+<span class="ck">Resource group :</span> <span class="cs">rg-j2d-healthcare</span>
+<span class="ck">MySQL version  :</span> <span class="cs">8.0</span>
+<span class="ck">Workload type  :</span> <span class="cs">Development</span>  <span class="cc"># cheapest tier</span>
+<span class="ck">SKU            :</span> <span class="cs">Burstable B1ms (1 vCore, 2 GB RAM)</span>
+<span class="ck">Admin username :</span> <span class="cs">j2dadmin</span>
+<span class="ck">Password       :</span> <span class="cs">J2D@Mysql2026!</span>
+<span class="ck">Connectivity   :</span> <span class="cs">Public access → Allow Azure services</span>
+
+<span class="cc"># Post-creation: Networking → Add your IP as firewall rule</span>
+<span class="cc"># Then run: SQL_Scripts/mysql_hospital_setup.sql</span>
+<span class="cc"># Verify: j2d_hospital_db.hospital_events has ~1000 rows</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">2.2 Azure SQL Database — Device Events (50 rows)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → SQL Database</span>
+<span class="ck">Server name      :</span> <span class="cs">j2d-sqlserver</span>  <span class="cc"># create new server</span>
+<span class="ck">Database name    :</span> <span class="cs">j2d_device_db</span>
+<span class="ck">Compute + storage:</span> <span class="cs">Serverless, General Purpose</span>
+<span class="ck">vCores           :</span> <span class="cs">1 min / 1 max</span>
+<span class="ck">Auto-pause       :</span> <span class="cs">60 minutes</span>  <span class="cc"># pauses when idle — saves cost</span>
+<span class="ck">Admin login      :</span> <span class="cs">j2dadmin</span>
+<span class="ck">Password         :</span> <span class="cs">J2D@Sql2026!</span>
+<span class="ck">Connectivity     :</span> <span class="cs">Allow Azure services = YES</span>
+
+<span class="cc"># Post-creation: Query Editor in Portal</span>
+<span class="cc"># Run: SQL_Scripts/azuresql_device_setup.sql</span>
+<span class="cc"># Verify: dbo.device_events has 50 rows</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">2.3 Azure PostgreSQL — Pharma Events (100 rows)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Azure Database for PostgreSQL – Flexible Server</span>
+<span class="ck">Server name    :</span> <span class="cs">j2d-pg-server</span>
+<span class="ck">Workload type  :</span> <span class="cs">Development</span>
+<span class="ck">SKU            :</span> <span class="cs">Burstable B1ms (1 vCore, 2 GB RAM)</span>
+<span class="ck">Admin username :</span> <span class="cs">j2dadmin</span>
+<span class="ck">Password       :</span> <span class="cs">J2D@Pg2026!</span>
+<span class="ck">Connectivity   :</span> <span class="cs">Public access → Allow Azure services</span>
+
+<span class="cc"># Post-creation: Networking → Add IP firewall rule</span>
+<span class="cc"># Connect via pgAdmin or Cloud Shell (psql)</span>
+<span class="cc"># Run: SQL_Scripts/postgresql_pharma_setup.sql</span>
+<span class="cc"># Verify: j2d_pharma_db.pharma_events has 100 rows</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>MySQL server created, hospital_events table has ~1000 rows</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Azure SQL DB created, dbo.device_events has 50 rows</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>PostgreSQL server created, pharma_events has 100 rows</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 3 databases allow Azure service connections (firewall rules)</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p2')">✓ Phase 2 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 3 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p3">
+    <div class="phase-trigger" onclick="togglePhase('p3')">
+      <div class="ph-num">3</div>
+      <div class="ph-info">
+        <div class="ph-title">ADLS Gen2 — Storage Account & Medallion Containers</div>
+        <div class="ph-desc">Create the data lake with 3 containers for raw, bronze, and gold layers</div>
+        <div class="ph-tags"><span class="ph-tag tag-beginner">Beginner</span><span class="ph-tag tag-config">Portal</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~10 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p3')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p3')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p3')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>ADLS Gen2 is the central "nervous system" of this pipeline. Everything flows through it. Why not just use databases everywhere? Because Parquet on a data lake is 10–100x cheaper than storing the same data in a relational database, and Databricks + Synapse both read it natively at high speed. The <strong>Hierarchical Namespace</strong> setting is what makes a regular Blob Storage account into an actual data lake — it enables directory-level ACLs and makes Databricks access dramatically faster.</div></div>
+        <table>
+          <tr><th>Container</th><th>Written by</th><th>Format</th><th>Purpose</th></tr>
+          <tr><td><code>rawlayer</code></td><td>ADF Copy Activity</td><td>CSV</td><td>Exact source data — never touched after landing</td></tr>
+          <tr><td><code>bronzelayer</code></td><td>Raw_NB.py</td><td>Parquet</td><td>Validated, typed — your "source of truth" backup</td></tr>
+          <tr><td><code>goldlayer</code></td><td>Gold_NB.py</td><td>Parquet</td><td>Business aggregations — what Power BI reads</td></tr>
+        </table>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Storage Account</span>
+<span class="ck">Name               :</span> <span class="cs">j2dstorage04</span>
+<span class="ck">Resource group     :</span> <span class="cs">rg-j2d-healthcare</span>
+<span class="ck">Performance        :</span> <span class="cs">Standard · LRS (Locally Redundant)</span>
+<span class="ck">Hierarchical NS    :</span> <span class="cs">✅ ENABLED</span>  <span class="cc"># CRITICAL — this makes it ADLS Gen2</span>
+
+<span class="cc"># After creation: Containers → + Container (create each)</span>
+<span class="ck">Container 1 :</span> <span class="cs">rawlayer</span>      <span class="cc"># Private access</span>
+<span class="ck">Container 2 :</span> <span class="cs">bronzelayer</span>   <span class="cc"># Private access</span>
+<span class="ck">Container 3 :</span> <span class="cs">goldlayer</span>     <span class="cc"># Private access</span>
+
+<span class="cc"># Save the storage account Access Key:</span>
+<span class="cc"># Security + networking → Access Keys → Copy key1</span>
+<span class="cc"># You'll store this in Key Vault next</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout warn"><span class="callout-icon">⚠️</span>If you forget to enable Hierarchical Namespace during creation, you cannot enable it later. You'd have to delete and recreate the storage account.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Storage account j2dstorage04 created with Hierarchical Namespace ENABLED</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container rawlayer created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container bronzelayer created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container goldlayer created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Access key copied (to use in Key Vault)</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p3')">✓ Phase 3 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 4 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p4">
+    <div class="phase-trigger" onclick="togglePhase('p4')">
+      <div class="ph-num">4</div>
+      <div class="ph-info">
+        <div class="ph-title">Azure Key Vault — Secure Secrets Storage</div>
+        <div class="ph-desc">Store all passwords centrally. ADF and Databricks pull secrets at runtime.</div>
+        <div class="ph-tags"><span class="ph-tag tag-advanced">Advanced</span><span class="ph-tag tag-config">Security Best Practice</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~10 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p4')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p4')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p4')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">🔐</span><div>Never hardcode passwords in ADF Linked Services or Databricks notebooks. If someone screenshots your pipeline JSON or your notebook ends up in a Git repo, those credentials are exposed. Key Vault stores secrets encrypted, audits every access, and lets you rotate passwords without changing any pipeline code.</div></div>
+        <div class="callout industry"><span class="callout-icon">🏢</span><strong>In every real data engineering team:</strong> Credentials → Key Vault. ADF + Databricks use Managed Identity to fetch secrets at runtime. No human ever touches the actual password after initial setup.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Key Vault</span>
+<span class="ck">Name        :</span> <span class="cs">j2d-keyvault</span>
+<span class="ck">Region      :</span> <span class="cs">East US</span>
+<span class="ck">Pricing tier:</span> <span class="cs">Standard</span>
+
+<span class="cc"># Secrets → + Generate/Import (create each)</span>
+<span class="ck">mysql-password     :</span>  <span class="cs">J2D@Mysql2026!</span>
+<span class="ck">azuresql-password  :</span>  <span class="cs">J2D@Sql2026!</span>
+<span class="ck">postgresql-password:</span>  <span class="cs">J2D@Pg2026!</span>
+<span class="ck">adls-account-key   :</span>  <span class="cs">[paste storage account key1 here]</span>
+<span class="ck">synapse-password   :</span>  <span class="cs">J2D@Synapse2026!</span>
+
+<span class="cc"># Grant ADF access to Key Vault:</span>
+<span class="cc"># Key Vault → Access Policies → + Add</span>
+<span class="ck">Secret permissions :</span> <span class="cs">Get, List</span>
+<span class="ck">Principal          :</span> <span class="cs">j2d-adf-healthcare (Managed Identity)</span>
+
+<span class="cc"># Also create Databricks Secret Scope:</span>
+<span class="cc"># Databricks → Settings → Secret Scopes → + Add</span>
+<span class="ck">Scope name    :</span> <span class="cs">j2d-kv-scope</span>
+<span class="ck">Key Vault URL :</span> <span class="cs">https://j2d-keyvault.vault.azure.net/</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Key Vault j2d-keyvault created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 secrets added (mysql, azuresql, postgresql, adls, synapse passwords)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADF Managed Identity granted Get/List access to Key Vault</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Secret Scope j2d-kv-scope linked to Key Vault</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p4')">✓ Phase 4 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 5 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p5">
+    <div class="phase-trigger" onclick="togglePhase('p5')">
+      <div class="ph-num">5</div>
+      <div class="ph-info">
+        <div class="ph-title">Azure Data Factory — Linked Services, Datasets & Pipeline</div>
+        <div class="ph-desc">Connect ADF to all 3 databases + ADLS, build 6 datasets, import pipeline JSON</div>
+        <div class="ph-tags"><span class="ph-tag tag-beginner">Beginner</span><span class="ph-tag tag-config">ADF Studio</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~25 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p5')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p5')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p5')">🔗 Linked Services</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p5')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>ADF's pipeline does two things: (1) Copy data from 3 source DBs to the raw ADLS layer in parallel, and (2) orchestrate the Databricks notebook chain in sequence. Without ADF you'd need to write custom Python scripts to extract from each DB, handle retries, log runs, and schedule. ADF gives all of that out of the box with a visual interface and built-in monitoring.</div></div>
+        <div class="analogy"><div class="analogy-head"><span class="analogy-icon">🔌</span>Linked Service = power socket</div>Every device you want to use needs to be plugged in first. A Linked Service "plugs" ADF into a data source or sink. Dataset = the specific extension cable you pick (which table, which file path). Copy Activity = actually moving data from one plugged-in thing to another.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="code-wrap"><pre><span class="cc"># Step 1: Create ADF</span>
+<span class="cc"># Portal → + Create → Data Factory</span>
+<span class="ck">Name    :</span> <span class="cs">j2d-adf-healthcare</span>
+<span class="ck">Version :</span> <span class="cs">V2</span>
+<span class="cc"># → Open Azure Data Factory Studio</span>
+
+<span class="cc"># Step 2: Create 5 Linked Services</span>
+<span class="cc"># ADF Studio → Manage → Linked Services → + New</span>
+<span class="cc"># (see "Linked Services" tab for each config)</span>
+
+<span class="cc"># Step 3: Create 6 Datasets</span>
+<span class="cc"># ADF Studio → Author → Datasets → + New dataset</span>
+<span class="cc"># Source datasets: MySQL table, AzureSQL table, PostgreSQL table</span>
+<span class="cc"># Sink datasets: 3x DelimitedText files in rawlayer/Raw_Data/</span>
+
+<span class="cc"># Step 4: Import Pipeline</span>
+<span class="cc"># Pipelines → ⋮ → Import from pipeline JSON</span>
+<span class="cc"># Upload: ADF_Pipeline_JSON/PL_J2D_HealthcareIngest.json</span>
+
+<span class="cc"># Step 5: Create Weekly Trigger</span>
+<span class="cc"># Pipeline → Add Trigger → New/Edit</span>
+<span class="ck">Name       :</span> <span class="cs">TRG_Weekly_Healthcare_Ingest</span>
+<span class="ck">Type       :</span> <span class="cs">Schedule</span>
+<span class="ck">Recurrence :</span> <span class="cs">Every 1 Week(s) on Monday at 06:00 AM</span>
+<span class="ck">Time zone  :</span> <span class="cs">India Standard Time</span>
+<span class="ck">Parameter  :</span> <span class="cs">input_date = @formatDateTime(trigger().scheduledTime,'yyyyMMdd')</span>
+
+<span class="cc"># → Publish All (activates the trigger)</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout note"><span class="callout-icon">ℹ️</span>The <code>input_date</code> parameter flows through every notebook. It tells notebooks which month to process. For manual testing use <code>20260201</code>.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <table>
+          <tr><th>Linked Service</th><th>Type</th><th>Connection Details</th></tr>
+          <tr><td><code>LS_MySQL_Hospital</code></td><td>Azure MySQL</td><td>j2d-mysql-server.mysql.database.azure.com · j2d_hospital_db · user: j2dadmin@j2d-mysql-server · pwd from Key Vault</td></tr>
+          <tr><td><code>LS_AzureSQL_Device</code></td><td>Azure SQL Database</td><td>j2d-sqlserver.database.windows.net · j2d_device_db · SQL Auth · pwd from Key Vault</td></tr>
+          <tr><td><code>LS_PostgreSQL_Pharma</code></td><td>Azure PostgreSQL</td><td>j2d-pg-server.postgres.database.azure.com · j2d_pharma_db · pwd from Key Vault</td></tr>
+          <tr><td><code>LS_ADLS_RawLayer</code></td><td>ADLS Gen2</td><td>j2dstorage04 · Account Key from Key Vault</td></tr>
+          <tr><td><code>LS_AzureDatabricks</code></td><td>Azure Databricks</td><td>j2d-databricks workspace · New job cluster · 13.3 LTS · Standard_DS3_v2 · Single node · 15 min auto-terminate</td></tr>
+        </table>
+        <div class="callout warn"><span class="callout-icon">⚠️</span>Click <strong>Test Connection</strong> on every Linked Service. All must pass before continuing. A failed test here means ADF Copy will silently fail at runtime.</div>
+        <h3 class="sub-h">6 Datasets to Create</h3>
+        <table>
+          <tr><th>Dataset Name</th><th>Linked Service</th><th>Points to</th></tr>
+          <tr><td><code>DS_MySQL_HospitalEvents</code></td><td>LS_MySQL_Hospital</td><td>Table: hospital_events</td></tr>
+          <tr><td><code>DS_AzureSQL_DeviceEvents</code></td><td>LS_AzureSQL_Device</td><td>Table: dbo.device_events</td></tr>
+          <tr><td><code>DS_PostgreSQL_PharmaEvents</code></td><td>LS_PostgreSQL_Pharma</td><td>Table: pharma_events</td></tr>
+          <tr><td><code>DS_ADLS_Raw_Hospital</code></td><td>LS_ADLS_RawLayer</td><td>rawlayer/Raw_Data/Hospital_events_January_2026.csv</td></tr>
+          <tr><td><code>DS_ADLS_Raw_Device</code></td><td>LS_ADLS_RawLayer</td><td>rawlayer/Raw_Data/Device_events_January_2026.csv</td></tr>
+          <tr><td><code>DS_ADLS_Raw_Pharma</code></td><td>LS_ADLS_RawLayer</td><td>rawlayer/Raw_Data/Pharma_events_January_2026.csv</td></tr>
+        </table>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADF j2d-adf-healthcare created, Studio accessible</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 Linked Services created — all Test Connection pass</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 6 Datasets created and published</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Pipeline JSON imported (PL_J2D_HealthcareIngest)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Weekly trigger TRG_Weekly_Healthcare_Ingest created and Published All</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p5')">✓ Phase 5 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 6 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p6">
+    <div class="phase-trigger" onclick="togglePhase('p6')">
+      <div class="ph-num">6</div>
+      <div class="ph-info">
+        <div class="ph-title">Databricks — Cluster, ADLS Config & Notebook Import</div>
+        <div class="ph-desc">Create compute cluster, link ADLS via secret scope, import 5 notebooks, bootstrap Silver schema</div>
+        <div class="ph-tags"><span class="ph-tag tag-advanced">Advanced</span><span class="ph-tag tag-config">PySpark</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~20 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p6')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p6')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p6')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>Databricks runs PySpark — distributed Python that can process data across many machines. Even on a Single Node cluster (1 machine), PySpark gives you Delta Lake support, optimised Parquet reading, and a declarative SQL engine. We use Single Node + auto-terminate 15 min to minimise cost on the free trial.</div></div>
+        <div class="callout industry"><span class="callout-icon">🏢</span><strong>Why not just pandas?</strong> Pandas loads everything into memory. For 1,000 rows it would work, but the code would break at 100 million rows. PySpark is scale-agnostic — the same code runs on 1 node or 1,000 nodes. Writing it with Spark from the start is the professional choice.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">Create Interactive Cluster</h3>
+        <div class="code-wrap"><pre><span class="cc"># Databricks → Compute → + Create Cluster</span>
+<span class="ck">Cluster name     :</span> <span class="cs">j2d-cluster</span>
+<span class="ck">Cluster mode     :</span> <span class="cs">Single Node</span>
+<span class="ck">Databricks RT    :</span> <span class="cs">13.3 LTS (Spark 3.4, Scala 2.12)</span>
+<span class="ck">Node type        :</span> <span class="cs">Standard_DS3_v2</span>
+<span class="ck">Auto-terminate   :</span> <span class="cs">15 minutes</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">Configure ADLS Access</h3>
+        <div class="code-wrap"><pre><span class="cc"># Option A: Spark Config on Cluster (Advanced → Spark Config)</span>
+<span class="cm">spark.hadoop.fs.azure.account.key.j2dstorage04.dfs.core.windows.net</span>
+<span class="co">{{secrets/j2d-kv-scope/adls-account-key}}</span>
+
+<span class="cc"># Option B: In first cell of each notebook</span>
+spark.conf.set(
+  <span class="cs">"fs.azure.account.key.j2dstorage04.dfs.core.windows.net"</span>,
+  dbutils.secrets.get(scope=<span class="cs">"j2d-kv-scope"</span>, key=<span class="cs">"adls-account-key"</span>)
+)</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">Import Notebooks (in order)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Workspace → Users → your@email → Import</span>
+<span class="cc"># Select "Source Files (.py)" for each:</span>
+<span class="cs">1. Helper_NB.py</span>       <span class="cc"># shared utilities — import first</span>
+<span class="cs">2. Create table.py</span>    <span class="cc"># run ONCE to create Silver Delta tables</span>
+<span class="cs">3. Raw_NB.py</span>
+<span class="cs">4. Silver_NB.py</span>
+<span class="cs">5. Gold_NB.py</span>
+
+<span class="cc"># Open "Create table" notebook → Run All</span>
+<span class="cc"># This bootstraps all 6 dim + 4 fact Silver tables</span>
+<span class="cc"># Run this ONLY ONCE. Never run again after first time.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">Create Databricks Workflow (Backup Orchestrator)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Workflows → + Create Job → J2D_Healthcare_Weekly_Job</span>
+<span class="cc"># Task 1 – Raw_NB      → Depends on: (none)</span>
+<span class="cc"># Task 2 – Silver_NB   → Depends on: Raw_NB (Success)</span>
+<span class="cc"># Task 3 – Gold_NB     → Depends on: Silver_NB (Success)</span>
+<span class="ck">Cluster   :</span> <span class="cs">Single Node, Standard_DS3_v2, 15 min auto-terminate</span>
+<span class="ck">Schedule  :</span> <span class="cs">Cron: 0 30 0 * * MON</span>  <span class="cc"># Mon 6AM IST, backup to ADF</span>
+<span class="ck">Email     :</span> <span class="cs">your@email.com (on failure)</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks cluster j2d-cluster created (Single Node, 13.3 LTS, 15 min terminate)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADLS access configured via secret scope or Spark config</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 notebooks imported in order</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Create table.py run once — Silver schema tables exist in catalog</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Workflow J2D_Healthcare_Weekly_Job created</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p6')">✓ Phase 6 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 7 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p7">
+    <div class="phase-trigger" onclick="togglePhase('p7')">
+      <div class="ph-num">7</div>
+      <div class="ph-info">
+        <div class="ph-title">Run the Medallion Pipeline — Raw → Bronze → Silver → Gold</div>
+        <div class="ph-desc">Execute all 3 Databricks notebooks and verify each layer's output</div>
+        <div class="ph-tags"><span class="ph-tag tag-run">Run</span><span class="ph-tag tag-advanced">Core Logic</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~30 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p7')">Raw → Bronze</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p7')">Bronze → Silver</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p7')">Silver → Gold</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p7')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">🔍</span><div><strong>Raw_NB.py — What it does:</strong> Reads the 3 CSVs from rawlayer. Runs schema checks (are all expected columns present?), null checks (event_id and patient_id must never be null), and type checks (billed_amount must be parseable as integer). If anything fails, it calls <code>dbutils.notebook.exit("ERROR: ...")</code> — which stops the entire pipeline. Nothing corrupt ever reaches Bronze.</div></div>
+        <div class="code-wrap"><pre><span class="cc"># Test manually first — ADF Trigger Now</span>
+<span class="cc"># ADF → Author → PL_J2D_HealthcareIngest → Add Trigger → Trigger Now</span>
+<span class="ck">input_date :</span> <span class="cs">20260201</span>
+
+<span class="cc"># Or run Raw_NB directly in Databricks with:</span>
+dbutils.widgets.text(<span class="cs">"input_date"</span>, <span class="cs">"20260201"</span>)
+
+<span class="cc"># Expected exit value:</span>
+<span class="cm">"All validations are successfully passed"</span>
+
+<span class="cc"># Verify in ADLS:</span>
+<span class="cc"># bronzelayer/Staging_Data/Hospital_Data/*.parquet → must exist</span>
+<span class="cc"># bronzelayer/Staging_Data/Device_Data/*.parquet   → must exist</span>
+<span class="cc"># bronzelayer/Staging_Data/Pharma_Data/*.parquet   → must exist</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout warn"><span class="callout-icon">🛑</span>If Raw_NB fails, check: ADLS account key configured correctly? rawlayer CSVs exist (ADF Copy ran first)? Column names match expected schema?</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="callout why"><span class="callout-icon">🏗️</span><div><strong>Silver_NB.py — What it does:</strong> Reads validated Bronze Parquet, cleanses (trim whitespace, parse dates, standardise gender codes), derives new columns (age from DOB, is_currently_admitted from discharge_time IS NULL, revenue_leakage = billed_amount - approved_amount), then splits denormalised rows into a proper star schema: 6 dimension tables + 4 fact tables written as Delta format.</div></div>
+        <div class="code-wrap"><pre><span class="cc"># Silver tables created (check in Databricks catalog):</span>
+<span class="cm">silver.dim_patient</span>          <span class="cc"># patient demographics</span>
+<span class="cm">silver.dim_insurance</span>        <span class="cc"># insurer names</span>
+<span class="cm">silver.dim_doctor</span>           <span class="cc"># attending doctors</span>
+<span class="cm">silver.dim_bed</span>              <span class="cc"># bed types (ICU/General/Private)</span>
+<span class="cm">silver.dim_device</span>           <span class="cc"># medical device types</span>
+<span class="cm">silver.dim_medicine</span>         <span class="cc"># medicine catalog</span>
+<span class="cm">silver.fact_admission</span>       <span class="cc"># one row per hospital visit</span>
+<span class="cm">silver.fact_billing</span>         <span class="cc"># billed vs approved amounts</span>
+<span class="cm">silver.fact_device_usage</span>    <span class="cc"># device utilization per hospital</span>
+<span class="cm">silver.fact_medicine_inventory</span> <span class="cc"># stock levels per hospital</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout tip"><span class="callout-icon">✅</span>Run in Databricks: <code>display(spark.sql("SHOW TABLES IN silver"))</code> — should show all 10 tables.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="callout why"><span class="callout-icon">🥇</span><div><strong>Gold_NB.py — What it does:</strong> Reads Silver Delta tables, runs business-level aggregations (weekly admission trends, revenue leakage by insurer, device utilization %, medicine stock alert levels), and writes 7 Parquet files to goldlayer. <em>Important: uses coalesce(1) so each table writes as a single Parquet file — required for Synapse's OPENROWSET to read cleanly.</em></div></div>
+        <div class="code-wrap"><pre><span class="cc"># Verify 7 Parquet folders in ADLS goldlayer:</span>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))
+
+<span class="cc"># Should see:</span>
+<span class="cs">gold_medicine_availability/</span>
+<span class="cs">gold_device_availability/</span>
+<span class="cs">gold_finance_weekly/</span>
+<span class="cs">gold_weekly_admissions/</span>
+<span class="cs">gold_claim_status_summary/</span>
+<span class="cs">gold_rejected_claims/</span>
+<span class="cs">gold_patient_status/</span>
+
+<span class="cc"># Expected exit value:</span>
+<span class="cm">"Gold layer processing completed successfully"</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout note"><span class="callout-icon">ℹ️</span>Gold uses <code>mode("overwrite")</code> — safe to re-run. Each run refreshes the gold data cleanly. This is why you can test with <code>input_date=20260201</code> multiple times.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADF manual trigger run with input_date=20260201 — all activities green</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Raw_NB exit: "All validations are successfully passed"</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>3 Parquet folders in bronzelayer/Staging_Data/</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Silver_NB succeeded — 10 tables in Databricks silver catalog</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Gold_NB exit: "Gold layer processing completed"</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>7 Parquet folders in goldlayer/Gold_Data/</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>J2D_Audit_table has 10+ rows with status='Success'</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p7')">✓ Phase 7 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 8 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p8">
+    <div class="phase-trigger" onclick="togglePhase('p8')">
+      <div class="ph-num">8</div>
+      <div class="ph-info">
+        <div class="ph-title">Azure Synapse Analytics — External Tables & Gold Views</div>
+        <div class="ph-desc">Create serverless SQL layer over goldlayer Parquet for Power BI</div>
+        <div class="ph-tags"><span class="ph-tag tag-advanced">Advanced</span><span class="ph-tag tag-config">SQL</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~20 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p8')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p8')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p8')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>Power BI needs a SQL endpoint — it can't read Parquet directly. Synapse Serverless SQL is the cheapest way to expose ADLS data as SQL tables. It doesn't copy the data (unlike Dedicated SQL Pool) — it reads Parquet on-demand using OPENROWSET. Cost: ~$5 per TB scanned. For our ~5 MB of data, that's effectively $0.01 per month.</div></div>
+        <div class="callout warn"><span class="callout-icon">🛑</span><strong>Critical:</strong> Do NOT create a Dedicated SQL Pool. It costs $720+/month minimum and runs 24/7 even with zero queries. The built-in Serverless SQL Pool is what you need — it's already included in the Synapse workspace at no fixed cost.</div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="code-wrap"><pre><span class="cc"># Step 1: Create Synapse workspace</span>
+<span class="cc"># Portal → + Create → Azure Synapse Analytics</span>
+<span class="ck">Workspace name  :</span> <span class="cs">j2d-synapse</span>
+<span class="ck">Data Lake Storage:</span> <span class="cs">j2dstorage04</span>  <span class="cc"># filesystem = goldlayer</span>
+<span class="ck">SQL admin       :</span> <span class="cs">j2dadmin</span>
+<span class="ck">Password        :</span> <span class="cs">J2D@Synapse2026!</span>
+<span class="cc"># ⚠️ Use ONLY Serverless SQL Pool — NOT Dedicated</span>
+
+<span class="cc"># Step 2: Grant Synapse Managed Identity access to ADLS</span>
+<span class="cc"># j2dstorage04 → Access Control (IAM) → + Add role assignment</span>
+<span class="ck">Role      :</span> <span class="cs">Storage Blob Data Reader</span>
+<span class="ck">Assign to :</span> <span class="cs">Managed Identity → j2d-synapse</span>
+
+<span class="cc"># Step 3: Run SQL scripts in Synapse Studio</span>
+<span class="cc"># Synapse Studio → Develop → + SQL Script → Built-in pool</span>
+<span class="cm">Run: synapse_external_tables.sql</span>  <span class="cc"># creates DB + 7 external tables</span>
+<span class="cm">Run: synapse_gold_views.sql</span>        <span class="cc"># creates 6 Power BI-ready views</span>
+
+<span class="cc"># Step 4: Verify</span>
+<span class="cm">SELECT TOP 5 * FROM gold.medicine_availability;</span>
+<span class="cm">SELECT TOP 5 * FROM gold.vw_Finance_Summary;</span>
+
+<span class="cc"># Note down Serverless endpoint for Power BI:</span>
+<span class="cs">j2d-synapse-ondemand.sql.azuresynapse.net</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Synapse workspace j2d-synapse created (Serverless only)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Managed Identity granted Storage Blob Data Reader on j2dstorage04</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>synapse_external_tables.sql run — all 7 external tables created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>synapse_gold_views.sql run — 6 views created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div">SELECT COUNT(*) > 0 for at least one external table</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Serverless endpoint URL noted: j2d-synapse-ondemand.sql.azuresynapse.net</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p8')">✓ Phase 8 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 9 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p9">
+    <div class="phase-trigger" onclick="togglePhase('p9')">
+      <div class="ph-num">9</div>
+      <div class="ph-info">
+        <div class="ph-title">Power BI — 4-Page Live Healthcare Dashboard</div>
+        <div class="ph-desc">Connect DirectQuery to Synapse, build Hospital · Finance · Device · Pharma pages</div>
+        <div class="ph-tags"><span class="ph-tag tag-beginner">Beginner</span><span class="ph-tag tag-run">BI</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~45 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p9')">Connect</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">Page 1 & 2</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">Page 3 & 4</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div><strong>DirectQuery</strong> means Power BI doesn't import a copy of the data — every visual sends a SQL query to Synapse when refreshed. This means your report always shows live data without scheduled refreshes. The trade-off: slightly slower than Import mode, but for healthcare data where you want yesterday's admissions this morning, DirectQuery is correct.</div></div>
+        <div class="code-wrap"><pre><span class="cc"># Power BI Desktop → Get Data → Azure → Azure Synapse Analytics SQL</span>
+<span class="ck">Server  :</span> <span class="cs">j2d-synapse-ondemand.sql.azuresynapse.net</span>
+<span class="cc"># ⚠️ Use the ondemand (Serverless) endpoint, NOT the workspace endpoint</span>
+<span class="ck">Database:</span> <span class="cs">j2d_gold_db</span>
+<span class="ck">Mode    :</span> <span class="cs">DirectQuery</span>
+
+<span class="cc"># Select these 6 views:</span>
+<span class="cs">gold.vw_Finance_Summary</span>
+<span class="cs">gold.vw_Weekly_Admissions</span>
+<span class="cs">gold.vw_Device_Utilization</span>
+<span class="cs">gold.vw_Medicine_Stock_Alert</span>
+<span class="cs">gold.vw_Claim_Status_Breakdown</span>
+<span class="cs">gold.vw_Rejected_Claims_Ranking</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">Page 1 — Hospital Overview</h3>
+        <table>
+          <tr><th>Visual</th><th>Fields</th><th>Measure</th></tr>
+          <tr><td>KPI Card</td><td>Total Admissions</td><td>DISTINCTCOUNT(admission_id)</td></tr>
+          <tr><td>KPI Card</td><td>Currently Admitted</td><td>COUNTROWS(FILTER(is_currently=true))</td></tr>
+          <tr><td>KPI Card</td><td>Discharged</td><td>Total – Currently Admitted</td></tr>
+          <tr><td>Line Chart</td><td>Weekly Trend</td><td>week_start_date × total_admissions</td></tr>
+          <tr><td>Stacked Bar</td><td>By Department</td><td>department × admission_count</td></tr>
+        </table>
+        <h3 class="sub-h">Page 2 — Finance & Claims</h3>
+        <table>
+          <tr><th>Visual</th><th>Fields</th><th>Config</th></tr>
+          <tr><td>KPI Card</td><td>Revenue Leakage ₹</td><td>SUM(revenue_leakage)</td></tr>
+          <tr><td>KPI Card</td><td>Avg Approval %</td><td>AVERAGE(approval_percentage)</td></tr>
+          <tr><td>Clustered Bar</td><td>Leakage by Insurer</td><td>insurance_name × revenue_leakage</td></tr>
+          <tr><td>Table with CF</td><td>Weekly Claims</td><td>Conditional format approval_pct</td></tr>
+          <tr><td>Donut</td><td>Claim Status</td><td>Approved / Rejected / Pending split</td></tr>
+        </table>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">Page 3 — Device Utilization</h3>
+        <table>
+          <tr><th>Visual</th><th>Config</th></tr>
+          <tr><td>Matrix</td><td>Rows: hospital_id · Cols: device_type · Values: utilization_pct<br>Conditional format: Red >90% · Yellow 70–90% · Green &lt;70%</td></tr>
+          <tr><td>Bar Chart</td><td>device_type × available_units vs in-use units</td></tr>
+          <tr><td>Alert Table</td><td>Filter utilization_pct > 90 — overloaded devices</td></tr>
+        </table>
+        <h3 class="sub-h">Page 4 — Pharma Inventory</h3>
+        <table>
+          <tr><th>Visual</th><th>Config</th></tr>
+          <tr><td>Bar Chart</td><td>medicine_category × total_available_stock</td></tr>
+          <tr><td>Table</td><td>hospital_id · medicine_name · stock · alert_level<br>CF: CRITICAL=Red · LOW=Yellow · ADEQUATE=Green</td></tr>
+          <tr><td>Card</td><td>COUNT where expiry_status = EXPIRED</td></tr>
+          <tr><td>Scatter</td><td>total_stock vs available_stock by medicine</td></tr>
+        </table>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Power BI connected to Synapse Serverless endpoint (DirectQuery)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>6 gold views loaded and showing data</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 1 – Hospital Overview built (3 KPIs, line, bar)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 2 – Finance & Claims built (2 KPIs, bar, table, donut)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 3 – Device Utilization built (matrix with CF, bar, alert table)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 4 – Pharma Inventory built (bar, table with CF, card, scatter)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Healthcare colour theme applied, saved as J2D_Healthcare_Dashboard.pbix</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p9')">✓ Phase 9 Complete</button>
+    </div>
+  </div>
+  </div>
+
+  <!-- ───── PHASE 10 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p10">
+    <div class="phase-trigger" onclick="togglePhase('p10')">
+      <div class="ph-num">10</div>
+      <div class="ph-info">
+        <div class="ph-title">Monitor, Verify & Troubleshoot</div>
+        <div class="ph-desc">Full end-to-end verification + troubleshooting guide + audit queries</div>
+        <div class="ph-tags"><span class="ph-tag tag-verify">Verify</span><span class="ph-tag tag-run">Monitor</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~15 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p10')">Pre-run Check</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p10')">Audit Table</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p10')">Troubleshooting</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <h3 class="sub-h">Manual Trigger Test Checklist</h3>
+        <div class="callout note"><span class="callout-icon">ℹ️</span>Run this pre-flight every time before a test run to avoid debugging mid-run.</div>
+        <table>
+          <tr><th>Phase</th><th>Check</th><th>Expected</th></tr>
+          <tr><td>PRE</td><td>All 5 Linked Services</td><td>Test Connection → Green ✓</td></tr>
+          <tr><td>PRE</td><td>All 6 Datasets</td><td>Saved and Published</td></tr>
+          <tr><td>PRE</td><td>input_date format</td><td>YYYYMMDD e.g. 20260201</td></tr>
+          <tr><td>DURING</td><td>3 Copy activities</td><td>All green, rows copied > 0</td></tr>
+          <tr><td>DURING</td><td>Run_Raw_NB</td><td>Exit: "All validations passed"</td></tr>
+          <tr><td>DURING</td><td>Run_Silver_NB</td><td>Succeeded</td></tr>
+          <tr><td>DURING</td><td>Run_Gold_NB</td><td>Exit: "Gold layer completed"</td></tr>
+          <tr><td>POST</td><td>rawlayer</td><td>3 CSV files present</td></tr>
+          <tr><td>POST</td><td>bronzelayer</td><td>3 Parquet folders present</td></tr>
+          <tr><td>POST</td><td>goldlayer</td><td>7 Parquet folders present</td></tr>
+          <tr><td>POST</td><td>Synapse</td><td>SELECT COUNT(*) > 0</td></tr>
+          <tr><td>POST</td><td>Audit table</td><td>10+ rows, status='Success'</td></tr>
+        </table>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <div class="code-wrap"><pre><span class="cc">-- Query audit table in Databricks SQL or notebook</span>
+<span class="cm">SELECT</span> pipeline_name, notebook_name, layer,
+       record_count, status, load_time, report_month
+<span class="cm">FROM</span> J2D_Audit_table
+<span class="cm">ORDER BY</span> load_time <span class="cm">DESC</span>;
+
+<span class="cc">-- Simulate multiple weekly runs (all process January data)</span>
+<span class="cc">-- Run 1: input_date = 20260201 → processes Jan 2026</span>
+<span class="cc">-- Run 2: input_date = 20260208 → processes Jan 2026</span>
+<span class="cc">-- Safe to repeat: Gold uses mode("overwrite") — no duplicates</span>
+
+<span class="cc">-- ADLS verification in Databricks notebook</span>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <table>
+          <tr><th>Issue</th><th>Root Cause</th><th>Fix</th></tr>
+          <tr><td>ADF Copy fails – MySQL</td><td>Firewall or username format</td><td>Add your IP; username must be <code>j2dadmin@j2d-mysql-server</code></td></tr>
+          <tr><td>Databricks fails at ADLS write</td><td>Account key not configured</td><td>Check spark.conf.set in notebook or Cluster Spark config</td></tr>
+          <tr><td>Synapse external table empty</td><td>Managed Identity missing RBAC</td><td>Assign Storage Blob Data Reader to j2d-synapse on j2dstorage04</td></tr>
+          <tr><td>Parquet read error in Synapse</td><td>Gold wrote Delta format</td><td>Gold_NB must use <code>.write.format("parquet")</code> not <code>.format("delta")</code></td></tr>
+          <tr><td>Power BI can't connect</td><td>Wrong endpoint used</td><td>Use <code>ondemand</code> endpoint, NOT the workspace SQL endpoint</td></tr>
+          <tr><td>Raw_NB exits with error</td><td>Validation failure</td><td>Read the exit message — it names the failing column/check</td></tr>
+        </table>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p10')">✓ Phase 10 Complete — Pipeline Live!</button>
+    </div>
+  </div>
+  </div>
+
+</div><!-- /guide -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: SCHEMA
+════════════════════════════════════════════════ -->
+<div id="sec-schema" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--teal-dim);color:var(--teal)">Silver Layer</div>
+    <div class="sec-title">Data Model — Star Schema</div>
+    <div class="sec-desc">6 dimension tables + 4 fact tables + 7 gold aggregation outputs. Click any table header to see its columns.</div>
+  </div>
+  <div class="schema-view">
+    <div class="schema-table"><div class="schema-head dim">📘 dim_patient</div>
+      <div class="schema-row"><span>patient_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>patient_gender</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>patient_dob</span><span class="col-type">DATE</span></div>
+      <div class="schema-row"><span>age (derived)</span><span class="col-type">INT</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head dim">📘 dim_insurance</div>
+      <div class="schema-row"><span>insurance_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>insurance_name</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head dim">📘 dim_doctor</div>
+      <div class="schema-row"><span>doctor_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>department</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head dim">📘 dim_bed</div>
+      <div class="schema-row"><span>bed_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>bed_type</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head dim">📘 dim_device</div>
+      <div class="schema-row"><span>device_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>device_type</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>hospital_id (FK)</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head dim">📘 dim_medicine</div>
+      <div class="schema-row"><span>medicine_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>medicine_name</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>category</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head fact">🟠 fact_admission</div>
+      <div class="schema-row"><span>event_id (PK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>patient_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>doctor_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>bed_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>hospital_id</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>admission_time</span><span class="col-type">TIMESTAMP</span></div>
+      <div class="schema-row"><span>discharge_time</span><span class="col-type">TIMESTAMP</span></div>
+      <div class="schema-row"><span>is_currently_admitted</span><span class="col-type">BOOLEAN</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head fact">🟠 fact_billing</div>
+      <div class="schema-row"><span>event_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>insurance_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>billed_amount</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>approved_amount</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>revenue_leakage</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>claim_status</span><span class="col-type">STRING</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head fact">🟠 fact_device_usage</div>
+      <div class="schema-row"><span>device_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>hospital_id</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>total_units</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>in_use_units</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>utilization_pct</span><span class="col-type">DECIMAL</span></div>
+    </div>
+    <div class="schema-table"><div class="schema-head fact">🟠 fact_medicine_inventory</div>
+      <div class="schema-row"><span>medicine_id (FK)</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>hospital_id</span><span class="col-type">STRING</span></div>
+      <div class="schema-row"><span>total_stock</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>available_stock</span><span class="col-type">INT</span></div>
+      <div class="schema-row"><span>expiry_date</span><span class="col-type">DATE</span></div>
+      <div class="schema-row"><span>stock_alert_level</span><span class="col-type">STRING</span></div>
+    </div>
+  </div>
+  <h3 class="sub-h" style="margin-top:24px">🥇 Gold Layer — Business Aggregations</h3>
+  <table>
+    <tr><th>Gold Table</th><th>Business Question It Answers</th><th>Source Silver Tables</th></tr>
+    <tr><td><code>gold_medicine_availability</code></td><td>Which hospital has low/critical medicine stock?</td><td>fact_medicine_inventory, dim_medicine</td></tr>
+    <tr><td><code>gold_device_availability</code></td><td>Are ICU devices overloaded in any hospital?</td><td>fact_device_usage, dim_device</td></tr>
+    <tr><td><code>gold_finance_weekly</code></td><td>Weekly revenue leakage and approval % by insurer</td><td>fact_billing, dim_insurance</td></tr>
+    <tr><td><code>gold_weekly_admissions</code></td><td>Weekly patient admission trend</td><td>fact_admission</td></tr>
+    <tr><td><code>gold_claim_status_summary</code></td><td>APPROVED/REJECTED/PENDING split per insurer</td><td>fact_billing, dim_insurance</td></tr>
+    <tr><td><code>gold_rejected_claims</code></td><td>Top insurers by rejection count</td><td>fact_billing, dim_insurance</td></tr>
+    <tr><td><code>gold_patient_status</code></td><td>Currently admitted vs discharged count</td><td>fact_admission</td></tr>
+  </table>
+</div><!-- /schema -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: ROLES
+════════════════════════════════════════════════ -->
+<div id="sec-roles" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--coral-dim);color:var(--coral)">Team Structure</div>
+    <div class="sec-title">6 Roles · 6 Sprints · 3 Weeks</div>
+    <div class="sec-desc">This project is solo, but it mimics how a real data engineering team divides work. Understanding these boundaries prepares you for actual team environments.</div>
+  </div>
+  <table>
+    <tr><th>Role</th><th>Sprint</th><th>Week</th><th>Owns</th><th>Deliverable</th></tr>
+    <tr><td><strong>Data Eng – Ingestion</strong></td><td>1</td><td>1</td><td>Source DBs, ADF Linked Services, Copy pipeline</td><td>3 CSVs land in rawlayer</td></tr>
+    <tr><td><strong>Data Eng – Processing</strong></td><td>2</td><td>1</td><td>Raw_NB, Silver_NB, Helper_NB</td><td>Bronze Parquet + Silver Delta tables</td></tr>
+    <tr><td><strong>Data Eng – Gold Layer</strong></td><td>3</td><td>2</td><td>Gold_NB, ADLS Parquet writes</td><td>7 Gold Parquet folders</td></tr>
+    <tr><td><strong>DWH Engineer</strong></td><td>4</td><td>2</td><td>Synapse external tables + views, IAM</td><td>6 external tables + 6 views queryable</td></tr>
+    <tr><td><strong>BI Developer</strong></td><td>5</td><td>3</td><td>Power BI 4-page dashboard</td><td>Live .pbix connected to Synapse</td></tr>
+    <tr><td><strong>DevOps / Ops</strong></td><td>6</td><td>3</td><td>ADF trigger, Databricks job, Azure Monitor alerts</td><td>Weekly automation + alerting live</td></tr>
+  </table>
+  <h3 class="sub-h" style="margin-top:24px">🏭 Industry Practices This Project Demonstrates</h3>
+  <div class="practices-grid">
+    <div class="prac-card"><div class="prac-icon">🥇</div><div class="prac-title">Medallion Architecture</div><div class="prac-desc">Bronze/Silver/Gold in Databricks notebooks — industry standard for data lakes</div></div>
+    <div class="prac-card"><div class="prac-icon">🎛️</div><div class="prac-title">Parameterised Pipelines</div><div class="prac-desc">ADF input_date parameter flows through every notebook — rerunnable for any date</div></div>
+    <div class="prac-card"><div class="prac-icon">📋</div><div class="prac-title">Audit Logging</div><div class="prac-desc">Every notebook writes to J2D_Audit_table — full observability of every run</div></div>
+    <div class="prac-card"><div class="prac-icon">🛑</div><div class="prac-title">Schema Validation (Fail Fast)</div><div class="prac-desc">Raw_NB exits immediately on bad data — corrupt data never reaches Silver</div></div>
+    <div class="prac-card"><div class="prac-icon">🔐</div><div class="prac-title">Least-Privilege Access</div><div class="prac-desc">Key Vault + Managed Identity — no passwords in code, no over-permissioned roles</div></div>
+    <div class="prac-card"><div class="prac-icon">💰</div><div class="prac-title">Cost Optimisation</div><div class="prac-desc">Auto-pause SQL, auto-terminate Databricks, Serverless Synapse — ~$35/month total</div></div>
+    <div class="prac-card"><div class="prac-icon">🏗️</div><div class="prac-title">Infrastructure as Code</div><div class="prac-desc">ADF pipeline importable as JSON — reproducible deployment in any environment</div></div>
+    <div class="prac-card"><div class="prac-icon">🔀</div><div class="prac-title">Separation of Concerns</div><div class="prac-desc">6 distinct roles — ingestion, processing, modelling, warehousing, BI, DevOps</div></div>
+    <div class="prac-card"><div class="prac-icon">📁</div><div class="prac-title">Source Control Ready</div><div class="prac-desc">All notebooks as .py files, all SQL as .sql files — git-committable from day one</div></div>
+  </div>
+</div><!-- /roles -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: REFERENCE
+════════════════════════════════════════════════ -->
+<div id="sec-reference" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--amber-dim);color:var(--amber)">Quick lookup</div>
+    <div class="sec-title">Quick Reference</div>
+    <div class="sec-desc">All names, values, endpoints and commands you'll need at a glance — bookmark this tab.</div>
+  </div>
+  <div class="ref-grid">
+    <div class="ref-card">
+      <div class="ref-title">🏗️ Resource Names</div>
+      <div class="ref-row"><span class="ref-key">Resource Group</span><span class="ref-val">rg-j2d-healthcare</span></div>
+      <div class="ref-row"><span class="ref-key">Storage Account</span><span class="ref-val">j2dstorage04</span></div>
+      <div class="ref-row"><span class="ref-key">Databricks</span><span class="ref-val">j2d-databricks</span></div>
+      <div class="ref-row"><span class="ref-key">ADF</span><span class="ref-val">j2d-adf-healthcare</span></div>
+      <div class="ref-row"><span class="ref-key">Synapse</span><span class="ref-val">j2d-synapse</span></div>
+      <div class="ref-row"><span class="ref-key">Key Vault</span><span class="ref-val">j2d-keyvault</span></div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-title">🗄️ Database Servers</div>
+      <div class="ref-row"><span class="ref-key">MySQL</span><span class="ref-val">j2d-mysql-server.mysql.database.azure.com</span></div>
+      <div class="ref-row"><span class="ref-key">Azure SQL</span><span class="ref-val">j2d-sqlserver.database.windows.net</span></div>
+      <div class="ref-row"><span class="ref-key">PostgreSQL</span><span class="ref-val">j2d-pg-server.postgres.database.azure.com</span></div>
+      <div class="ref-row"><span class="ref-key">Admin user</span><span class="ref-val">j2dadmin</span></div>
+      <div class="ref-row"><span class="ref-key">Synapse endpoint</span><span class="ref-val">j2d-synapse-ondemand.sql.azuresynapse.net</span></div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-title">💾 ADLS Paths</div>
+      <div class="ref-row"><span class="ref-key">Raw CSVs</span><span class="ref-val">rawlayer/Raw_Data/</span></div>
+      <div class="ref-row"><span class="ref-key">Bronze Parquet</span><span class="ref-val">bronzelayer/Staging_Data/</span></div>
+      <div class="ref-row"><span class="ref-key">Gold Parquet</span><span class="ref-val">goldlayer/Gold_Data/</span></div>
+      <div class="ref-row"><span class="ref-key">ABFS prefix</span><span class="ref-val">abfss://[container]@j2dstorage04.dfs.core.windows.net/</span></div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-title">⚙️ ADF Pipeline</div>
+      <div class="ref-row"><span class="ref-key">Pipeline name</span><span class="ref-val">PL_J2D_HealthcareIngest</span></div>
+      <div class="ref-row"><span class="ref-key">Trigger name</span><span class="ref-val">TRG_Weekly_Healthcare_Ingest</span></div>
+      <div class="ref-row"><span class="ref-key">Schedule</span><span class="ref-val">Every Monday 06:00 AM IST</span></div>
+      <div class="ref-row"><span class="ref-key">Parameter</span><span class="ref-val">input_date (YYYYMMDD)</span></div>
+      <div class="ref-row"><span class="ref-key">Test value</span><span class="ref-val">20260201</span></div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-title">📓 Databricks Notebooks</div>
+      <div class="ref-row"><span class="ref-key">Shared utils</span><span class="ref-val">Helper_NB.py</span></div>
+      <div class="ref-row"><span class="ref-key">Schema bootstrap</span><span class="ref-val">Create table.py (run once)</span></div>
+      <div class="ref-row"><span class="ref-key">Raw → Bronze</span><span class="ref-val">Raw_NB.py</span></div>
+      <div class="ref-row"><span class="ref-key">Bronze → Silver</span><span class="ref-val">Silver_NB.py</span></div>
+      <div class="ref-row"><span class="ref-key">Silver → Gold</span><span class="ref-val">Gold_NB.py</span></div>
+      <div class="ref-row"><span class="ref-key">Audit table</span><span class="ref-val">J2D_Audit_table</span></div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-title">💰 Cost Estimate</div>
+      <div class="ref-row"><span class="ref-key">MySQL B1ms</span><span class="ref-val">~$13/month</span></div>
+      <div class="ref-row"><span class="ref-key">Azure SQL Serverless</span><span class="ref-val">~$5/month</span></div>
+      <div class="ref-row"><span class="ref-key">PostgreSQL B1ms</span><span class="ref-val">~$13/month</span></div>
+      <div class="ref-row"><span class="ref-key">ADLS Gen2 &lt;5GB</span><span class="ref-val">~$0.50/month</span></div>
+      <div class="ref-row"><span class="ref-key">ADF (4 runs/mo)</span><span class="ref-val">~$2/month</span></div>
+      <div class="ref-row"><span class="ref-key">Databricks / run</span><span class="ref-val">~$2–5/run</span></div>
+      <div class="ref-row"><span class="ref-key">Synapse Serverless</span><span class="ref-val">~$1/month</span></div>
+      <div class="ref-row"><span class="ref-key" style="color:var(--green);font-weight:700">Total</span><span class="ref-val" style="color:var(--green)">~$35–43/month ✓ Free Trial</span></div>
+    </div>
+  </div>
+  <h3 class="sub-h">🔍 Useful Queries</h3>
+  <div class="code-wrap"><pre><span class="cc">-- Audit table: see all pipeline runs</span>
+<span class="cm">SELECT</span> pipeline_name, notebook_name, layer, record_count, status, load_time
+<span class="cm">FROM</span> J2D_Audit_table
+<span class="cm">ORDER BY</span> load_time <span class="cm">DESC</span>;
+
+<span class="cc">-- Synapse: spot-check gold data</span>
+<span class="cm">SELECT TOP 5 * FROM</span> gold.vw_Finance_Summary;
+<span class="cm">SELECT COUNT(*) FROM</span> gold.weekly_admissions;
+
+<span class="cc">-- Databricks: verify goldlayer folders</span>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))
+
+<span class="cc">-- Databricks: check Silver tables</span>
+<span class="cm">SHOW TABLES IN</span> silver;</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+</div><!-- /reference -->
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: FULL DOCS
+════════════════════════════════════════════════ -->
+<div id="sec-docs" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--purple-dim);color:var(--purple)">Source Documentation</div>
+    <div class="sec-title">Full Project Docs — Quick View</div>
+    <div class="sec-desc">Browse the original project documentation inline. Click any section to expand it.</div>
+  </div>
+
+  <!-- DOC 1 -->
+  <div class="doc-panel">
+    <div class="doc-panel-head">
+      <div class="doc-panel-icon">📄</div>
+      <div><div class="doc-panel-title">J2D Healthcare Project Documentation</div><div class="doc-panel-sub">Updated · Full project reference · Parts 1–3</div></div>
+    </div>
+    <div class="doc-toc">
+      <div class="doc-toc-title">Table of Contents</div>
+      <div class="doc-part">
+        <div class="doc-part-label">Part 1 — Overview & Architecture</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p1')">Project Overview & Tech Stack</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p2')">Dataset Overview & Hospital Events Schema</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p3')">Silver Layer Data Model</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p4')">Gold Layer Business Outputs</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p5')">Azure Free Trial Cost Estimate</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p6')">Power BI Dashboard Layout</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p7')">Audit Trail</div>
+      </div>
+      <div class="doc-part">
+        <div class="doc-part-label">Part 2 — Step-by-Step Runbook</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p8')">Phase 1: Azure Resource Creation</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p9')">Phase 2: ADF Setup (Linked Services, Datasets, Trigger)</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p10')">Phase 3–6: Databricks, Synapse, Power BI</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p11')">Phase 7: Trigger Testing — Manual & Automatic</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p12')">Observability, Monitoring & Troubleshooting</div>
+      </div>
+      <div class="doc-part">
+        <div class="doc-part-label">Part 3 — Team Roles & Practices</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p13')">6 Roles & Their Task Breakdowns</div>
+        <div class="doc-item" onclick="showDocContent('doc1-p14')">Sprint Timeline & Industry Practices</div>
+      </div>
+    </div>
+
+    <div id="doc1-p1" class="doc-content">
+      <h3>Project Overview</h3>
+      <p>An industry-standard healthcare data pipeline built on Microsoft Azure (optimized for Azure Free Trial) demonstrating a complete medallion architecture from raw source ingestion to Power BI dashboards.</p>
+      <table><tr><th>Attribute</th><th>Value</th></tr>
+        <tr><td>Domain</td><td>Healthcare</td></tr>
+        <tr><td>Architecture</td><td>Medallion (Raw → Bronze → Silver → Gold)</td></tr>
+        <tr><td>Cloud</td><td>Microsoft Azure (Free Trial compatible)</td></tr>
+        <tr><td>Orchestration</td><td>Azure Data Factory</td></tr>
+        <tr><td>Processing</td><td>Azure Databricks (PySpark)</td></tr>
+        <tr><td>Storage</td><td>Azure Data Lake Storage Gen2</td></tr>
+        <tr><td>Warehouse</td><td>Azure Synapse Analytics (Serverless SQL Pool)</td></tr>
+        <tr><td>Visualization</td><td>Power BI Desktop</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p2" class="doc-content">
+      <h3>Dataset Overview</h3>
+      <table><tr><th>File</th><th>Source</th><th>Records</th><th>Domain</th></tr>
+        <tr><td>Hospital_events_January_2026.csv</td><td>Azure MySQL</td><td>~1,000</td><td>Patient admissions, billing, claims</td></tr>
+        <tr><td>Device_events_January_2026.csv</td><td>Azure SQL</td><td>50</td><td>Medical device utilization per hospital</td></tr>
+        <tr><td>pharma_events (table)</td><td>Azure PostgreSQL</td><td>100</td><td>Medicine stock and expiry tracking</td></tr>
+      </table>
+      <h4>Hospital Events Schema (16 columns)</h4>
+      <table><tr><th>Column</th><th>Type</th><th>Description</th></tr>
+        <tr><td>event_id</td><td>STRING</td><td>Unique admission event ID</td></tr>
+        <tr><td>patient_id</td><td>STRING</td><td>Patient identifier</td></tr>
+        <tr><td>patient_gender</td><td>STRING</td><td>M / F / O</td></tr>
+        <tr><td>patient_dob</td><td>DATE</td><td>Date of birth</td></tr>
+        <tr><td>insurance_id</td><td>STRING</td><td>Insurance provider ID</td></tr>
+        <tr><td>insurance_name</td><td>STRING</td><td>Insurance company name</td></tr>
+        <tr><td>department</td><td>STRING</td><td>Cardiology, Neurology, etc.</td></tr>
+        <tr><td>doctor_id</td><td>STRING</td><td>Attending doctor</td></tr>
+        <tr><td>bed_id</td><td>STRING</td><td>Bed assigned</td></tr>
+        <tr><td>bed_type</td><td>STRING</td><td>ICU / General / Private</td></tr>
+        <tr><td>hospital_id</td><td>STRING</td><td>H1–H10</td></tr>
+        <tr><td>admission_time</td><td>TIMESTAMP</td><td>Admission datetime</td></tr>
+        <tr><td>discharge_time</td><td>TIMESTAMP</td><td>Discharge datetime (NULL if still admitted)</td></tr>
+        <tr><td>billed_amount</td><td>INT</td><td>Total bill raised</td></tr>
+        <tr><td>approved_amount</td><td>INT</td><td>Insurance approved amount</td></tr>
+        <tr><td>claim_status</td><td>STRING</td><td>APPROVED / REJECTED / PENDING</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p3" class="doc-content">
+      <h3>Silver Layer — Data Model (Star Schema)</h3>
+      <p>6 dimension tables + 4 fact tables written as Delta format in the Databricks silver schema.</p>
+      <h4>Dimension Tables</h4>
+      <ul><li>dim_patient — patient_id, patient_gender, patient_dob, age (derived)</li>
+        <li>dim_insurance — insurance_id, insurance_name</li>
+        <li>dim_doctor — doctor_id, department</li>
+        <li>dim_bed — bed_id, bed_type (ICU/General/Private)</li>
+        <li>dim_device — device_id, device_type, hospital_id</li>
+        <li>dim_medicine — medicine_id, medicine_name, category</li>
+      </ul>
+      <h4>Fact Tables</h4>
+      <ul><li>fact_admission — one row per hospital visit, links patient/doctor/bed/hospital</li>
+        <li>fact_billing — billed_amount, approved_amount, revenue_leakage, claim_status</li>
+        <li>fact_device_usage — units available, in-use, utilization_pct per hospital+device</li>
+        <li>fact_medicine_inventory — stock levels, expiry, stock_alert_level per hospital+medicine</li>
+      </ul>
+    </div>
+    <div id="doc1-p4" class="doc-content">
+      <h3>Gold Layer — Business Outputs</h3>
+      <table><tr><th>Gold Table</th><th>Business Question</th></tr>
+        <tr><td>gold_medicine_availability</td><td>Which hospital has low/critical medicine stock?</td></tr>
+        <tr><td>gold_device_availability</td><td>Are ICU devices overloaded in any hospital?</td></tr>
+        <tr><td>gold_finance_weekly</td><td>Weekly revenue leakage and approval % by insurer</td></tr>
+        <tr><td>gold_weekly_admissions</td><td>Weekly patient admission trend</td></tr>
+        <tr><td>gold_claim_status_summary</td><td>APPROVED/REJECTED/PENDING split per insurer</td></tr>
+        <tr><td>gold_rejected_claims</td><td>Top insurers by rejection count</td></tr>
+        <tr><td>gold_patient_status</td><td>Currently admitted vs discharged count</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p5" class="doc-content">
+      <h3>Azure Free Trial Cost Estimate</h3>
+      <table><tr><th>Service</th><th>SKU</th><th>Estimated Cost</th></tr>
+        <tr><td>Azure MySQL Flexible Server</td><td>Burstable B1ms (1 vCore, 2 GB)</td><td>~$13/month</td></tr>
+        <tr><td>Azure SQL Database</td><td>Serverless GP (auto-pause)</td><td>~$5/month</td></tr>
+        <tr><td>Azure PostgreSQL</td><td>Burstable B1ms (1 vCore, 2 GB)</td><td>~$13/month</td></tr>
+        <tr><td>ADLS Gen2</td><td>LRS, &lt;5 GB</td><td>~$0.5/month</td></tr>
+        <tr><td>Azure Data Factory</td><td>~4 weekly runs/month</td><td>~$2/month</td></tr>
+        <tr><td>Azure Databricks</td><td>Single Node, auto-terminate 15min</td><td>~$2–5/run</td></tr>
+        <tr><td>Azure Synapse (Serverless)</td><td>Pay per TB scanned</td><td>~$1/month</td></tr>
+        <tr><td><strong>Total</strong></td><td></td><td><strong>~$35–43/month</strong> ✓ Within $200 free trial</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p6" class="doc-content">
+      <h3>Power BI Dashboard Layout</h3>
+      <h4>Page 1: Hospital Overview</h4>
+      <ul><li>KPI Cards: Total Admissions, Currently Admitted, Discharged</li>
+        <li>Line Chart: Weekly Admissions Trend</li>
+        <li>Bar Chart: Admissions by Department</li>
+      </ul>
+      <h4>Page 2: Finance & Claims</h4>
+      <ul><li>KPI Cards: Total Billed, Total Approved, Revenue Leakage</li>
+        <li>Column Chart: Revenue Leakage by Insurer</li>
+        <li>Table: Weekly Claims by Insurer with Approval %</li>
+        <li>Donut Chart: Claim Status Distribution</li>
+      </ul>
+      <h4>Page 3: Device Utilization</h4>
+      <ul><li>Matrix: Utilization % by Hospital × Device Type (conditional formatting)</li>
+        <li>Bar Chart: Available vs In-Use Units by Device Type</li>
+        <li>Alert Table: Overloaded devices (&gt;90% utilization)</li>
+      </ul>
+      <h4>Page 4: Pharma Inventory</h4>
+      <ul><li>Bar Chart: Available Stock by Medicine Category</li>
+        <li>Table: Low/Critical Stock Alert per Hospital</li>
+        <li>Card: Expired Medicines Count</li>
+        <li>Scatter: Total Stock vs Available Stock by Medicine</li>
+      </ul>
+    </div>
+    <div id="doc1-p7" class="doc-content">
+      <h3>Audit Trail</h3>
+      <p>Every notebook writes to <code>J2D_Audit_table</code> (Databricks Delta) with:</p>
+      <ul><li>pipeline_name, notebook_name, run_id, source, layer</li>
+        <li>record_count, load_time, status, report_month</li>
+      </ul>
+      <pre>SELECT * FROM J2D_Audit_table ORDER BY load_time DESC;</pre>
+    </div>
+    <div id="doc1-p8" class="doc-content">
+      <h3>Phase 1: Azure Resource Creation</h3>
+      <h4>1.1 Resource Group</h4>
+      <pre>Portal > Resource Groups > + Create
+Name   : rg-j2d-healthcare
+Region : East US
+Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
+      <h4>1.2 ADLS Gen2 Containers</h4>
+      <p>Create storage account j2dstorage04 with Hierarchical Namespace enabled. Add containers: rawlayer, bronzelayer, goldlayer (all Private access).</p>
+      <h4>1.3–1.5 Source Databases</h4>
+      <p>MySQL: j2d-mysql-server (B1ms, MySQL 8.0) · Azure SQL: j2d-sqlserver (Serverless GP, auto-pause 60 min) · PostgreSQL: j2d-pg-server (B1ms). All use j2dadmin credentials, all allow Azure service connections.</p>
+      <h4>1.6 ADF + 1.7 Synapse</h4>
+      <p>ADF: j2d-adf-healthcare (V2). Synapse: j2d-synapse (Serverless SQL only — no Dedicated Pool). Grant Synapse Managed Identity Storage Blob Data Reader on j2dstorage04.</p>
+    </div>
+    <div id="doc1-p9" class="doc-content">
+      <h3>Phase 2: Azure Data Factory Setup</h3>
+      <h4>2.1 Five Linked Services</h4>
+      <p>LS_MySQL_Hospital · LS_AzureSQL_Device · LS_PostgreSQL_Pharma · LS_ADLS_RawLayer · LS_AzureDatabricks. All credentials from Key Vault. All must pass Test Connection.</p>
+      <h4>2.2 Six Datasets</h4>
+      <p>3 source datasets (one per DB table) + 3 sink datasets (one per CSV in rawlayer/Raw_Data/).</p>
+      <h4>2.3 Import Pipeline</h4>
+      <p>ADF Studio → Author → Pipelines → Import from pipeline JSON → upload PL_J2D_HealthcareIngest.json</p>
+      <h4>2.4 Weekly Trigger</h4>
+      <p>TRG_Weekly_Healthcare_Ingest · Schedule: Every Monday 06:00 AM IST · Parameter: input_date = @formatDateTime(trigger().scheduledTime,'yyyyMMdd') · Click Publish All.</p>
+    </div>
+    <div id="doc1-p10" class="doc-content">
+      <h3>Phase 3–6: Databricks, Synapse, Power BI</h3>
+      <h4>Phase 3: Import Notebooks</h4>
+      <p>Databricks Workspace → Users → Import (Source Files .py): Helper_NB.py, Create table.py (run once), Raw_NB.py, Silver_NB.py, Gold_NB.py.</p>
+      <h4>Phase 4: Databricks Job</h4>
+      <p>Workflows → Create Job: J2D_Healthcare_Weekly_Job. Tasks: Raw_NB → Silver_NB → Gold_NB (success dependency chain). Schedule: Cron 0 30 0 * * 1 (Mon 6AM IST). Backup to ADF trigger.</p>
+      <h4>Phase 5: Synapse Setup</h4>
+      <p>Synapse Studio → Develop → SQL Script → Built-in pool. Run synapse_external_tables.sql then synapse_gold_views.sql. Verify SELECT TOP 5 from each external table.</p>
+      <h4>Phase 6: Power BI</h4>
+      <p>Get Data → Azure Synapse Analytics SQL → j2d-synapse-ondemand.sql.azuresynapse.net · j2d_gold_db · DirectQuery. Load 6 gold views. Build 4 pages.</p>
+    </div>
+    <div id="doc1-p11" class="doc-content">
+      <h3>Phase 7: Trigger Testing</h3>
+      <h4>7.1 Manual ADF Trigger</h4>
+      <p>ADF → PL_J2D_HealthcareIngest → Add Trigger → Trigger Now → input_date: 20260201 → OK. Monitor → Pipeline runs to see activity-level results.</p>
+      <h4>7.2 Manual Databricks Workflow</h4>
+      <p>Workflows → J2D_Healthcare_Weekly_Job → Run Now → Override input_date: 20260201.</p>
+      <h4>7.3 Verify Automatic Weekly Trigger</h4>
+      <p>ADF Studio → Manage → Triggers → TRG_Weekly_Healthcare_Ingest must show Status: Started.</p>
+      <h4>7.5 Trigger Comparison</h4>
+      <table><tr><th>Feature</th><th>ADF Manual</th><th>ADF Weekly</th><th>Databricks Manual</th><th>Databricks Weekly</th></tr>
+        <tr><td>Who initiates</td><td>You</td><td>Azure scheduler</td><td>You</td><td>Azure scheduler</td></tr>
+        <tr><td>When to use</td><td>Dev/testing</td><td>Production</td><td>Notebook testing</td><td>Backup automation</td></tr>
+        <tr><td>input_date</td><td>Manual entry</td><td>Auto from trigger time</td><td>Manual entry</td><td>Static or computed</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p12" class="doc-content">
+      <h3>Observability & Monitoring</h3>
+      <h4>ADF Monitoring</h4>
+      <p>ADF Studio → Monitor → Pipeline runs. View duration, status, activity-level logs per run.</p>
+      <h4>Databricks Monitoring</h4>
+      <p>Databricks → Workflows → J2D_Healthcare_Weekly_Job → Runs.</p>
+      <h4>Troubleshooting</h4>
+      <table><tr><th>Issue</th><th>Resolution</th></tr>
+        <tr><td>ADF Copy fails – MySQL</td><td>Verify firewall + username j2dadmin@j2d-mysql-server</td></tr>
+        <tr><td>Databricks fails at ADLS write</td><td>Verify spark.conf.set or Key Vault secret scope</td></tr>
+        <tr><td>Synapse external table empty</td><td>Check Managed Identity = Storage Blob Data Reader on ADLS</td></tr>
+        <tr><td>Parquet read error in Synapse</td><td>Gold_NB must write coalesce(1).write.format("parquet") not Delta</td></tr>
+        <tr><td>Power BI can't connect</td><td>Use Serverless (ondemand) endpoint, not Dedicated endpoint</td></tr>
+      </table>
+    </div>
+    <div id="doc1-p13" class="doc-content">
+      <h3>6 Roles & Task Breakdowns</h3>
+      <p><strong>Role 1 – Data Engineer (Ingestion):</strong> Source DB setup, ADF Linked Services, Copy pipeline. Deliverable: 3 CSVs in rawlayer.</p>
+      <p><strong>Role 2 – Data Engineer (Processing):</strong> Import Raw_NB + Silver_NB, bootstrap silver schema. Deliverable: Bronze Parquet + Silver Delta tables + Audit logging.</p>
+      <p><strong>Role 3 – Data Engineer (Gold):</strong> Gold_NB, 7 Parquet folders in goldlayer. Deliverable: gold layer complete + audit entries.</p>
+      <p><strong>Role 4 – DWH Engineer:</strong> Synapse workspace, RBAC, external tables, gold views. Deliverable: 6 external tables + 6 views queryable.</p>
+      <p><strong>Role 5 – BI Developer:</strong> Power BI 4-page dashboard, DirectQuery to Synapse. Deliverable: .pbix connected to live Synapse data.</p>
+      <p><strong>Role 6 – DevOps / Ops:</strong> ADF trigger, Databricks workflow, Azure Monitor alerts. Deliverable: fully automated weekly pipeline with alerting.</p>
+    </div>
+    <div id="doc1-p14" class="doc-content">
+      <h3>Sprint Timeline</h3>
+      <table><tr><th>Week</th><th>Sprint</th><th>Focus</th></tr>
+        <tr><td>Week 1</td><td>Sprint 1</td><td>Resource creation, Source systems, ADF Copy</td></tr>
+        <tr><td>Week 1</td><td>Sprint 2</td><td>Databricks notebooks – Raw & Silver</td></tr>
+        <tr><td>Week 2</td><td>Sprint 3</td><td>Gold_NB – Gold layer and ADLS writes</td></tr>
+        <tr><td>Week 2</td><td>Sprint 4</td><td>Synapse external tables and views</td></tr>
+        <tr><td>Week 3</td><td>Sprint 5</td><td>Power BI dashboard (4 pages)</td></tr>
+        <tr><td>Week 3</td><td>Sprint 6</td><td>Triggers, Jobs, Monitoring</td></tr>
+      </table>
+      <h4>Industry Practices Demonstrated</h4>
+      <ul><li>Medallion Architecture · Parameterised Pipelines · Audit Logging</li>
+        <li>Schema Validation (fail fast) · Least-Privilege Access · External Data Sources</li>
+        <li>Cost Optimisation · Separation of Concerns · Source Control Ready · Infrastructure as Code</li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- /docs -->
+
+</div><!-- content -->
+</div><!-- layout -->
+
+<script>
+// ─── SECTION switching ───
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(n => {
+    if (n.textContent.toLowerCase().includes(id.substring(0,4))) n.classList.add('active');
+    else n.classList.remove('active');
+  });
+}
+
+// ─── PHASE accordion ───
+function togglePhase(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+function openPhase(id) {
+  const el = document.getElementById(id);
+  if (!el.classList.contains('open')) el.classList.add('open');
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ─── LEARN TABS inside phase ───
+function switchLearnTab(btn, phaseId) {
+  const body = btn.closest('.phase-body');
+  const tabs = body.querySelectorAll('.ltab');
+  const contents = body.querySelectorAll('.ltab-content');
+  const idx = Array.from(tabs).indexOf(btn);
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.classList.remove('active'));
+  tabs[idx].classList.add('active');
+  contents[idx].classList.add('active');
+}
+
+// ─── CONCEPT cards ───
+function toggleConcept(el) { el.classList.toggle('open'); }
+
+// ─── CHECKLIST ───
+function toggleCheck(li) {
+  li.classList.toggle('checked');
+  li.querySelector('.chk').textContent = li.classList.contains('checked') ? '✓' : '';
+  updateProgress();
+}
+
+// ─── MARK DONE ───
+function markPhaseDone(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('done');
+  updateProgress();
+}
+
+// ─── PROGRESS ───
+function updateProgress() {
+  const total = document.querySelectorAll('.phase-accordion').length;
+  const done = document.querySelectorAll('.phase-accordion.done').length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progText').textContent = done + ' / ' + total + ' phases done';
+  const offset = 94 - (94 * pct / 100);
+  document.getElementById('ringCircle').style.strokeDashoffset = offset;
+  document.getElementById('ringText').textContent = pct + '%';
+}
+
+// ─── MODE TOGGLE ───
+let mode = 'beginner';
+function toggleMode() {
+  mode = mode === 'beginner' ? 'advanced' : 'beginner';
+  document.getElementById('modeLabel').textContent = mode === 'beginner' ? 'Beginner' : 'Expert';
+  document.body.className = mode + '-mode';
+}
+
+// ─── COPY BUTTONS ───
+function copyCode(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  const text = pre.innerText.replace(/^Copy$/m,'').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+document.querySelectorAll('.code-wrap pre').forEach(pre => {
+  if (!pre.parentElement.querySelector('.copy-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn'; btn.textContent = 'Copy';
+    btn.onclick = function(){ copyCode(this); };
+    pre.parentElement.appendChild(btn);
+  }
+});
+
+// ─── DOC CONTENT viewer ───
+function showDocContent(id) {
+  const all = document.querySelectorAll('.doc-content');
+  const target = document.getElementById(id);
+  if (target.classList.contains('active')) { target.classList.remove('active'); return; }
+  all.forEach(c => c.classList.remove('active'));
+  target.classList.add('active');
+  target.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+updateProgress();
+</script>
+</body>
+</html>
