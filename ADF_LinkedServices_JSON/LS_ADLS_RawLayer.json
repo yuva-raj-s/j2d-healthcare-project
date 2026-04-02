@@ -1,0 +1,13 @@
+{
+    "name": "LS_ADLS_RawLayer",
+    "properties": {
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "https://j2dstorage04.dfs.core.windows.net",
+            "accountKey": {
+                "type": "SecureString",
+                "value": "<YOUR_STORAGE_ACCOUNT_KEY>"
+            }
+        }
+    }
+}

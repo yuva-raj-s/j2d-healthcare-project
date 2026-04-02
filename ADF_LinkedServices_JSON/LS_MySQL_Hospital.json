@@ -1,0 +1,15 @@
+{
+    "name": "LS_MySQL_Hospital",
+    "properties": {
+        "type": "MySql",
+        "typeProperties": {
+            "server": "j2d-mysql-server.mysql.database.azure.com",
+            "database": "j2d_hospital_db",
+            "username": "j2dadmin@j2d-mysql-server",
+            "password": {
+                "type": "SecureString",
+                "value": "J2D@Mysql2026!"
+            }
+        }
+    }
+}

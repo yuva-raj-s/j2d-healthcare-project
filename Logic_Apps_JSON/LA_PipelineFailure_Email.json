@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+        "Send_an_email_(V2)": {
+            "type": "ApiConnection",
+            "inputs": {
+                "host": {
+                    "connection": {
+                        "name": "@parameters('$connections')['office365']['connectionId']"
+                    }
+                },
+                "method": "post",
+                "body": {
+                    "To": "team_admin@j2dhealthcare.com",
+                    "Subject": "Alert: ADF Pipeline Failed - @{triggerBody()?['pipelineName']}",
+                    "Body": "<p><strong>The ADF Pipeline has failed. Please check the logs immediately.</strong></p><br><p><strong>Pipeline Name:</strong> @{triggerBody()?['pipelineName']}</p><br><p><strong>Run ID:</strong> @{triggerBody()?['runId']}</p><br><p><strong>Status:</strong> @{triggerBody()?['status']}</p><br><p>Please review the Data Factory monitoring portal for exact errors.</p>",
+                    "Importance": "High"
+                },
+                "path": "/v2/Mail"
+            },
+            "runAfter": {}
+        }
+    },
+    "triggers": {
+        "manual": {
+            "type": "Request",
+            "kind": "Http",
+            "inputs": {
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "pipelineName": {
+                            "type": "string"
+                        },
+                        "runId": {
+                            "type": "string"
+                        },
+                        "status": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "parameters": {
+        "$connections": {
+            "defaultValue": {},
+            "type": "Object"
+        }
+    }
+}

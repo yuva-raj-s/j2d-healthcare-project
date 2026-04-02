@@ -1,0 +1,16 @@
+{
+    "name": "LS_PostgreSQL_Pharma",
+    "properties": {
+        "type": "PostgreSqlV2",
+        "typeProperties": {
+            "server": "j2d-pg-server.postgres.database.azure.com",
+            "database": "j2d_pharma_db",
+            "username": "j2dadmin",
+            "password": {
+                "type": "SecureString",
+                "value": "J2D@Pg2026!"
+            },
+            "sslMode": "Require"
+        }
+    }
+}

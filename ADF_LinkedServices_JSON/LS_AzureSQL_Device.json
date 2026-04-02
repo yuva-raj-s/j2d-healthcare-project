@@ -1,0 +1,9 @@
+{
+    "name": "LS_AzureSQL_Device",
+    "properties": {
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=j2d-sqlserver.database.windows.net;Initial Catalog=j2d_device_db;User ID=j2dadmin;Password=J2D@Sql2026!"
+        }
+    }
+}
