@@ -134,7 +134,7 @@ Although you are doing this solo, the project is designed to mimic how a **real 
   - Table: Stock alert level per hospital+medicine
   - Card: Expired stock count
 - [ ] Apply consistent theme (corporate blue/healthcare palette)
-- [ ] Export as `.pbix` file and save to `Documentation/`
+- [ ] Export as `.pbix` file and save to `documentation/`
 
 **Deliverable:** 4-page Power BI report connected to live Synapse data
 

@@ -104,33 +104,33 @@ An **industry-standard healthcare data pipeline** built on **Microsoft Azure** (
 
 ```
 J2D_Healthcare_Project/
-├── ADF_Assets/
-│   ├── Linked_Services/                  # Azure connection endpoints
-│   └── Pipelines/                        # ADF pipeline pipelines & triggers
+├── adf_assets/
+│   ├── linkedservice/                    # Azure connection endpoints
+│   └── pipeline/                         # ADF pipeline pipelines & triggers
 │
-├── Database_Scripts/
+├── database_scripts/
 │   ├── azuresql_device_setup.sql         # Azure SQL DDL + source inserts
 │   ├── mysql_hospital_setup.sql          # MySQL DDL + source inserts
 │   ├── postgresql_pharma_setup.sql       # PostgreSQL DDL + source inserts
 │   ├── synapse_external_tables.sql       # Synapse external tables (Serverless)
 │   └── synapse_gold_views.sql            # Power BI-ready views
 │
-├── Databricks_Notebooks/
+├── databricks_notebooks/
 │   ├── Create_Tables.py                  # Silver Delta table DDL
 │   ├── Helper_NB.py                      # Shared utility functions
 │   ├── Raw_NB.py                         # Raw → Bronze layer notebook
 │   ├── Silver_NB.py                      # Bronze → Silver layer notebook
 │   └── Gold_NB.py                        # Silver → Gold layer notebook
 │
-├── Documentation/
+├── documentation/
 │   ├── Architecture_and_Runbook.md               # Step-by-step setup guide
 │   ├── Team_Roles_and_Tasks.md                   # Role-based task breakdown
 │   └── (Other guides, PPTs, HTML tools)          # Checklists and documentation
 │
-├── Logic_Apps/
+├── logic_apps/
 │   └── LA_PipelineFailure_Email.json     # Logic workflow for error alerts
 │
-├── Sample_Data/
+├── sample_data/
 │   ├── Hospital_events_January_2026.csv
 │   ├── Device_events_January_2026.csv
 │   └── Pharma_events_January_2026.csv

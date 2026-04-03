@@ -30,7 +30,7 @@ stages:
       displayName: 'Install Databricks CLI'
     
     - script: |
-        databricks workspace import-dir Databricks_Notebooks $(databricksWorkspacePath) -o
+        databricks workspace import-dir databricks_notebooks $(databricksWorkspacePath) -o
       env:
         # These variables must be set as Secrets in your Azure DevOps Pipeline Variables
         DATABRICKS_HOST: $(DATABRICKS_HOST)

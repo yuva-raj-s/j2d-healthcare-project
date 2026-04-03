@@ -34,7 +34,7 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          databricks workspace import-dir Databricks_Notebooks ${{ env.DATABRICKS_WORKSPACE_PATH }} -o
+          databricks workspace import-dir databricks_notebooks ${{ env.DATABRICKS_WORKSPACE_PATH }} -o
 
   deploy-adf:
     name: Deploy Azure Data Factory

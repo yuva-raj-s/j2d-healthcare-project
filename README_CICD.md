@@ -50,5 +50,5 @@ The pipeline YAML is located at `azure-pipelines.yml`.
 ## Deployment Logic
 
 Both CI runs trigger sequentially:
-1. **Deploy Databricks**: Uses the open-source Databricks CLI to sync all code located inside `Databricks_Notebooks/` to `/Workspace/Shared/J2D_Project` over HTTPS.
+1. **Deploy Databricks**: Uses the open-source Databricks CLI to sync all code located inside `databricks_notebooks/` to `/Workspace/Shared/J2D_Project` over HTTPS.
 2. **Deploy ADF**: Uses Azure standard deployment tasks to read your ARM templates and push changes across Linked Services, Pipelines, and Dataset definitions into the live Azure Data Factory service instance.
