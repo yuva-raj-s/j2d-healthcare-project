@@ -1,0 +1,63 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Setup this Service Connection Name in Azure DevOps Project Settings
+  azureSubscriptionConnection: 'J2D-Azure-Service-Connection'
+  resourceGroupName: 'rg-j2d-healthcare'
+  dataFactoryName: 'j2d-adf-healthcare'
+  databricksWorkspacePath: '/Workspace/Shared/J2D_Project'
+
+stages:
+- stage: DeployDatabricks
+  displayName: 'Deploy Databricks Notebooks Stage'
+  jobs:
+  - job: DeployNotebooks
+    displayName: 'Upload Code via Databricks CLI'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+    
+    - script: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/setup.sh | sh
+      displayName: 'Install Databricks CLI'
+    
+    - script: |
+        databricks workspace import-dir Databricks_Notebooks $(databricksWorkspacePath) -o
+      env:
+        # These variables must be set as Secrets in your Azure DevOps Pipeline Variables
+        DATABRICKS_HOST: $(DATABRICKS_HOST)
+        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+      displayName: 'Import Notebooks to Workspace'
+
+
+- stage: DeployADF
+  displayName: 'Deploy Azure Data Factory Stage'
+  dependsOn: DeployDatabricks
+  condition: succeeded()
+  jobs:
+  - job: DeployADF
+    displayName: 'Deploy ADF using ARM Template'
+    steps:
+    # IMPORTANT: 
+    # This task requires your ADF to be Git-integrated, which generates ARM templates out of your JSON files.
+    # Replace `csmFile` and `csmParametersFile` paths to match your `adf_publish` branch output folder.
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: $(azureSubscriptionConnection)
+        subscriptionId: '$(AZURE_SUBSCRIPTION_ID)' # Must be set as a Pipeline variable
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(resourceGroupName)
+        location: 'East US'
+        templateLocation: 'Linked artifact'
+        csmFile: 'arm_template.json' 
+        csmParametersFile: 'arm_template_parameters.json'
+        # overrideParameters: '-factoryName "prod-j2d-adf" -LS_AzureDatabricks_accessToken "$(DATABRICKS_TOKEN)"'

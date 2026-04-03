@@ -1,0 +1,63 @@
+name: J2D Healthcare - Deploy Data Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from the GitHub UI
+
+env:
+  # Resource Variables
+  RESOURCE_GROUP: "rg-j2d-healthcare"
+  DATAFACTORY_NAME: "j2d-adf-healthcare"
+  DATABRICKS_WORKSPACE_PATH: "/Workspace/Shared/J2D_Project"
+
+jobs:
+  deploy-databricks:
+    name: Deploy Databricks Notebooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/setup.sh | sh
+
+      - name: Deploy Notebooks to Databricks Workspace
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks workspace import-dir Databricks_Notebooks ${{ env.DATABRICKS_WORKSPACE_PATH }} -o
+
+  deploy-adf:
+    name: Deploy Azure Data Factory
+    runs-on: ubuntu-latest
+    needs: deploy-databricks # Wait for notebooks to successfully deploy first
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # NOTE: This step assumes you have linked your ADF to this GitHub repo
+      # and it has generated ARM templates in an `adf_publish` branch or a specific directory.
+      # If you are strictly using raw JSON files (not recommended for CI/CD), custom deployment 
+      # scripts (e.g. PowerShell Az.DataFactory module) must replace this step.
+      
+      - name: Deploy Azure Data Factory ARM Template
+        uses: Azure/data-factory-deploy-action@v1.2.0
+        with:
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          dataFactoryName: ${{ env.DATAFACTORY_NAME }}
+          armTemplateFile: arm_template.json # Point to where your ADF saves its ARM Template
+          armTemplateParametersFile: arm_template_parameters.json # Point to ARM parameters

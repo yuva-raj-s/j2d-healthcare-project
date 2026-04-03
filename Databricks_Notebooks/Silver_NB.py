@@ -7,20 +7,23 @@
 # CONFIGURATION
 # -------------------------
 
+# Retrieve secrets from Key Vault (Scope: adls)
+mysql_password = dbutils.secrets.get(scope="adls", key="mysql-password")
+azuresql_password = dbutils.secrets.get(scope="adls", key="azuresql-password")
+postgresql_password = dbutils.secrets.get(scope="adls", key="postgresql-password")
+adls_account_key = dbutils.secrets.get(scope="adls", key="adls-account-key")
+synapse_password = dbutils.secrets.get(scope="adls", key="synapse-password")
+
 # Replace with your values
 storage_account_name = "j2dstorage04"
 container_name = "bronzelayer"
-account_key = "<REDACTED_AZURE_KEY>"
-
-# Secure option: Store the key in Databricks secrets instead of hardcoding
-# account_key = dbutils.secrets.get(scope="my-scope", key="storage-account-key")
 
 # -------------------------
 # SETUP CONFIGURATION
 # -------------------------
 spark.conf.set(
   f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-  account_key
+  adls_account_key
 )
 
 # COMMAND ----------

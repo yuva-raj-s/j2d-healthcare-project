@@ -399,6 +399,8 @@ ul.body-list li{margin-bottom:4px}
     <button class="tab" onclick="showSection('roles',this)">👥 Team Roles</button>
     <button class="tab" onclick="showSection('reference',this)">📚 Quick Reference</button>
     <button class="tab" onclick="showSection('docs',this)">📄 Full Docs</button>
+    <button class="tab" onclick="showSection('enterprise',this)">🏢 Enterprise Standard</button>
+    <button class="tab" onclick="showSection('interview',this)">🎤 Interview Prep</button>
   </div>
   <div class="mode-toggle" onclick="toggleMode()" id="modeBtn">
     <span class="mode-dot"></span><span id="modeLabel">Beginner</span>
@@ -426,6 +428,8 @@ ul.body-list li{margin-bottom:4px}
       <a class="nav-link" onclick="showSection('roles',null)"><em class="nav-icon">👥</em>Team & Roles</a>
       <a class="nav-link" onclick="showSection('reference',null)"><em class="nav-icon">📚</em>Quick Reference</a>
       <a class="nav-link" onclick="showSection('docs',null)"><em class="nav-icon">📄</em>Full Docs</a>
+      <a class="nav-link" onclick="showSection('enterprise',null)"><em class="nav-icon">🏢</em>Enterprise Standard</a>
+      <a class="nav-link" onclick="showSection('interview',null)"><em class="nav-icon">🎤</em>Interview Prep</a>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Pipeline Phases</div>
@@ -1782,6 +1786,114 @@ Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
   </div>
 
 </div><!-- /docs -->
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: ENTERPRISE STANDARD
+════════════════════════════════════════════════ -->
+<div id="sec-enterprise" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--purple-dim);color:var(--purple)">Real-world context</div>
+    <div class="sec-title">Enterprise Standard vs. This Project</div>
+    <div class="sec-desc">How a pure, real-world enterprise team operates daily compared to the portfolio-optimized setup in this repository.</div>
+  </div>
+
+  <h3 class="sub-h">1. Infrastructure Provisioning</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🏭</span>Enterprise Standard: Infrastructure as Code (IaC)</div>
+    Real teams do not use the Azure Portal UI to click and create databases or workspaces. They write code (<strong>Terraform</strong> or <strong>Bicep</strong>) to provision infrastructure identically across Dev, Test, and Prod environments. Changes to infrastructure are reviewed via pull requests.
+  </div>
+  <p class="body-text"><strong>In this project:</strong> We use the Azure Portal directly. This is acceptable for learning and prototyping, but lacks the auditability and repeatability of IaC.</p>
+
+  <h3 class="sub-h">2. Secrets Management</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🔐</span>Enterprise Standard: Azure Key Vault Integration</div>
+    Industry security mandates that <em>no credentials</em> exist in source control. Linked Services and Databricks endpoints dynamically fetch secrets via Managed Identity from an Azure Key Vault at runtime.
+  </div>
+  <p class="body-text"><strong>In this project:</strong> Passwords are listed directly inside <code>SecureString</code> configurations in the JSON files. While better than plaintext, true architectures never let tokens touch Git.</p>
+
+  <h3 class="sub-h">3. Software Engineering on Databricks</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🐍</span>Enterprise Standard: Modular Python & Unit Testing</div>
+    Large organizations forbid executing monolithic code exclusively as raw Notebooks. Code is built as modular Python packages (<code>.whl</code>), relies on dependency managers (<code>requirements.txt</code> or <code>pyproject.toml</code>), and undergoes strict <code>pytest</code> unit testing before reaching standard execution layers.
+  </div>
+  <p class="body-text"><strong>In this project:</strong> We run isolated, top-down <code>.py</code> notebook scripts. This achieves the Medallion transformation goals but avoids strict code validation.</p>
+
+  <h3 class="sub-h">4. Pipeline Deployments</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🚀</span>Enterprise Standard: Databricks Asset Bundles (DABs)</div>
+    Enterprise Databricks platforms utilize Databricks Asset Bundles (<code>databricks.yml</code>) to define workflows, testing compute resources, and artifact lifecycles natively as code, rather than running manual <code>import-dir</code> CLI scripts.
+  </div>
+  <p class="body-text"><strong>In this project:</strong> We deploy notebooks via the basic Databricks CLI inside CI/CD pipelines, omitting advanced bundle configurations.</p>
+
+  <h3 class="sub-h">5. Data Quality Enforcement</h3>
+  <div class="analogy">
+    <div class="analogy-head"><span class="analogy-icon">🚦</span>Enterprise Standard: Dead-Letter Queues (DLQ)</div>
+    In production, bad data cannot simply crash a pipeline or secretly pass into the bronze layer. Pipelines implement frameworks like <strong>Great Expectations</strong> or robust schema enforcement to write bad rows to a <code>/Quarantine</code> or Dead-Letter layer, triggering alerts for investigation.
+  </div>
+  <p class="body-text"><strong>In this project:</strong> Raw notebooks perform basic null-validation, but do not split streaming data into automated quarantine layers.</p>
+
+</div><!-- /enterprise -->
+
+<!-- ═══════════════════════════════════════════════
+     SECTION: INTERVIEW PREP
+════════════════════════════════════════════════ -->
+<div id="sec-interview" class="section">
+  <div class="sec-head">
+    <div class="sec-tag" style="background:var(--teal-dim);color:var(--teal)">Career Growth</div>
+    <div class="sec-title">Interactive Interview Flashcards</div>
+    <div class="sec-desc">Test your project knowledge! Click any question card to reveal the expert-level answer regarding specific architectural choices made during this build.</div>
+  </div>
+
+  <div class="concept-grid">
+    <!-- Card 1 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🔄</div><div><div class="concept-title">Q: Why use Databricks if ADF has Data Flows?</div><div class="concept-sub">Orchestration vs Transformation</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>While ADF features "Mapping Data Flows" for visual transformations, we use <strong>Databricks (PySpark)</strong> because it offers granular control over big data logic, handles complex Delta Lake ACID transactions with ease, and is generally more cost-effective for massive-scale parallel processing. Here, ADF acts strictly as the <strong>orchestrator</strong> (the conductor) while Databricks is the <strong>compute engine</strong> (the musicians).
+      </div>
+    </div>
+    
+    <!-- Card 2 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🎖️</div><div><div class="concept-title">Q: Defend the Medallion Architecture.</div><div class="concept-sub">Why three layers?</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>The Medallion pattern (Raw → Bronze → Silver → Gold) guarantees <strong>data traceability and recovery</strong>. If the Silver transformation logic has an error, we don't need to re-query the original healthcare source databases (which impacts their operational load); we simple reprocess the data sitting immutably in the Raw/Bronze Data Lake. It physically separates messy extraction from clean reporting.
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🏛️</div><div><div class="concept-title">Q: Why Serverless Synapse?</div><div class="concept-sub">Serverless vs Dedicated Pool</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>We chose <strong>Serverless SQL Pools</strong> because it costs $5 per Terabyte queried and allows us to read Gold layer Parquet files directly from ADLS Gen2 using <code>OPENROWSET</code> without duplicating the data. Dedicated SQL Pools cost over $700/month idle and require loading data directly into the database storage engine. For reporting layers without massive concurrency needs, Serverless is infinitely more optimal.
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🔑</div><div><div class="concept-title">Q: Why Delta format in Silver, but Parquet in Gold?</div><div class="concept-sub">Storage format incompatibilities</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br><strong>Delta Lake</strong> (built on Parquet) provides ACID guarantees. In the Silver layer, we need to run <code>MERGE</code> statements to update incorrect hospital records without rewriting entire partitions. However, Synapse Serverless SQL connects easily to raw <strong>Parquet</strong> files, while the accompanying Delta transaction log artifacts sometimes restrict Synapse parsing. Consequently, Gold aggregated views are written out as raw Parquet strings for seamless Power BI consumption.
+      </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🚦</div><div><div class="concept-title">Q: How would you handle dirty data?</div><div class="concept-sub">Dead-Letter Queues</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>In an Enterprise setup, I would enforce schema bounds in the <code>Raw_NB.py</code> notebook. Instead of letting bad records (e.g. string text in an integer <i>blood_pressure</i> field) crash the PySpark job, I would invoke a Dead-Letter Queue (DLQ) pattern. Correct rows pass into the Bronze layer, while corrupt rows are partitioned out to a <code>/Quarantine</code> folder in ADLS Gen2. A Logic App would then alert the engineering team of the quarantined file.
+      </div>
+    </div>
+    
+    <!-- Card 6 -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🔐</div><div><div class="concept-title">Q: How is security handled?</div><div class="concept-sub">RBAC and Managed Identities</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>No passwords sit in code. The pipeline relies entirely on <strong>Role-Based Access Control (RBAC)</strong> and <strong>Managed Identities</strong>. Synapse and Databricks are given the "Storage Blob Data Reader" role to query ADLS. Any external tokens needed (like Databricks deployment tokens) are passed from Azure Key Vault implicitly, ensuring that developers only interact with connection references rather than sensitive strings.
+      </div>
+    </div>
+  </div>
+</div><!-- /interview -->
 
 </div><!-- content -->
 </div><!-- layout -->
