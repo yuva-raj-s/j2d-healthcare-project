@@ -1,7 +1,7 @@
 {
     "name": "PL_J2D_HealthcareIngest",
     "properties": {
-        "description": "J2D Healthcare – End-to-end weekly ingestion pipeline. Copies Hospital (MySQL), Device (Azure SQL), Pharma (Blob) to Raw layer, then triggers Raw → Silver → Gold Databricks notebooks.",
+        "description": "J2D Healthcare – End-to-end weekly ingestion pipeline. Copies Hospital (MySQL), Device (Azure SQL), Pharma (PostgreSQL) to Raw layer, then triggers Raw → Silver → Gold Databricks notebooks.",
         "activities": [
             {
                 "name": "Copy_Hospital_From_MySQL",
@@ -13,6 +13,7 @@
                     "retry": 2,
                     "retryIntervalInSeconds": 60
                 },
+                "userProperties": [],
                 "typeProperties": {
                     "source": {
                         "type": "MySqlSource",
@@ -42,13 +43,15 @@
                 "inputs": [
                     {
                         "referenceName": "DS_MySQL_HospitalEvents",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Hospital",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ]
             },
@@ -62,6 +65,7 @@
                     "retry": 2,
                     "retryIntervalInSeconds": 60
                 },
+                "userProperties": [],
                 "typeProperties": {
                     "source": {
                         "type": "AzureSqlSource",
@@ -85,13 +89,15 @@
                 "inputs": [
                     {
                         "referenceName": "DS_AzureSQL_DeviceEvents",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Device",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ]
             },
@@ -105,6 +111,7 @@
                     "retry": 2,
                     "retryIntervalInSeconds": 60
                 },
+                "userProperties": [],
                 "typeProperties": {
                     "source": {
                         "type": "PostgreSqlV2Source",
@@ -126,13 +133,15 @@
                 "inputs": [
                     {
                         "referenceName": "DS_PostgreSQL_PharmaEvents",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Pharma",
-                        "type": "DatasetReference"
+                        "type": "DatasetReference",
+                        "parameters": {}
                     }
                 ]
             },
@@ -143,15 +152,15 @@
                 "dependsOn": [
                     {
                         "activity": "Copy_Hospital_From_MySQL",
-                        "dependencyConditions": ["Succeeded"]
+                        "dependencyConditions": [ "Succeeded" ]
                     },
                     {
                         "activity": "Copy_Device_From_AzureSQL",
-                        "dependencyConditions": ["Succeeded"]
+                        "dependencyConditions": [ "Succeeded" ]
                     },
                     {
                         "activity": "Copy_Pharma_From_PostgreSQL",
-                        "dependencyConditions": ["Succeeded"]
+                        "dependencyConditions": [ "Succeeded" ]
                     }
                 ],
                 "policy": {
@@ -159,31 +168,25 @@
                     "retry": 1,
                     "retryIntervalInSeconds": 120
                 },
+                "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/Workspace/Users/kattayashu2020@gmail.com/Raw_NB",
+                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Raw_NB",
                     "baseParameters": {
                         "pipeline_name": {
                             "value": "@pipeline().Pipeline",
                             "type": "Expression"
                         },
-                        "notebook_name": {
-                            "value": "raw_nb",
-                            "type": "Expression"
-                        },
+                        "notebook_name": "raw_nb",
                         "run_id": {
                             "value": "@pipeline().RunId",
                             "type": "Expression"
                         },
-                        "source": {
-                            "value": "MySQL|AzureSQL|PostgreSQL",
-                            "type": "Expression"
-                        },
+                        "source": "MySQL|AzureSQL|PostgreSQL",
                         "input_date": {
                             "value": "@pipeline().parameters.input_date",
                             "type": "Expression"
                         }
-                    },
-                    "libraries": []
+                    }
                 },
                 "linkedServiceName": {
                     "referenceName": "LS_AzureDatabricks",
@@ -197,7 +200,7 @@
                 "dependsOn": [
                     {
                         "activity": "Run_Raw_NB",
-                        "dependencyConditions": ["Succeeded"]
+                        "dependencyConditions": [ "Succeeded" ]
                     }
                 ],
                 "policy": {
@@ -205,25 +208,20 @@
                     "retry": 1,
                     "retryIntervalInSeconds": 120
                 },
+                "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/Workspace/Users/kattayashu2020@gmail.com/Silver_NB",
+                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Silver_NB",
                     "baseParameters": {
                         "pipeline_name": {
                             "value": "@pipeline().Pipeline",
                             "type": "Expression"
                         },
-                        "notebook_name": {
-                            "value": "silver_nb",
-                            "type": "Expression"
-                        },
+                        "notebook_name": "silver_nb",
                         "run_id": {
                             "value": "@pipeline().RunId",
                             "type": "Expression"
                         },
-                        "source": {
-                            "value": "MySQL|AzureSQL|PostgreSQL",
-                            "type": "Expression"
-                        },
+                        "source": "MySQL|AzureSQL|PostgreSQL",
                         "input_date": {
                             "value": "@pipeline().parameters.input_date",
                             "type": "Expression"
@@ -242,7 +240,7 @@
                 "dependsOn": [
                     {
                         "activity": "Run_Silver_NB",
-                        "dependencyConditions": ["Succeeded"]
+                        "dependencyConditions": [ "Succeeded" ]
                     }
                 ],
                 "policy": {
@@ -250,25 +248,20 @@
                     "retry": 1,
                     "retryIntervalInSeconds": 120
                 },
+                "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/Workspace/Users/kattayashu2020@gmail.com/Gold_NB",
+                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Gold_NB",
                     "baseParameters": {
                         "pipeline_name": {
                             "value": "@pipeline().Pipeline",
                             "type": "Expression"
                         },
-                        "notebook_name": {
-                            "value": "gold_nb",
-                            "type": "Expression"
-                        },
+                        "notebook_name": "gold_nb",
                         "run_id": {
                             "value": "@pipeline().RunId",
                             "type": "Expression"
                         },
-                        "source": {
-                            "value": "MySQL|AzureSQL|PostgreSQL",
-                            "type": "Expression"
-                        },
+                        "source": "MySQL|AzureSQL|PostgreSQL",
                         "input_date": {
                             "value": "@pipeline().parameters.input_date",
                             "type": "Expression"
@@ -283,27 +276,33 @@
             {
                 "name": "OnFailure_Notify",
                 "description": "Web activity to log pipeline failure to audit or alert team",
-                "type": "Web",
+                "type": "WebActivity",
                 "dependsOn": [
                     {
                         "activity": "Run_Raw_NB",
-                        "dependencyConditions": ["Failed"]
+                        "dependencyConditions": [ "Failed" ]
                     },
                     {
                         "activity": "Run_Silver_NB",
-                        "dependencyConditions": ["Failed"]
+                        "dependencyConditions": [ "Failed" ]
                     },
                     {
                         "activity": "Run_Gold_NB",
-                        "dependencyConditions": ["Failed"]
+                        "dependencyConditions": [ "Failed" ]
                     }
                 ],
+                "policy": {
+                    "timeout": "0.00:10:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30
+                },
+                "userProperties": [],
                 "typeProperties": {
-                    "url": "https://prod-xx.eastus.logic.azure.com/workflows/...",
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
                     },
+                    "url": "https://prod-xx.eastus.logic.azure.com/workflows/REPLACE_WITH_YOUR_LOGIC_APP_URL",
                     "body": {
                         "value": "@concat('{\"pipelineName\":\"', pipeline().Pipeline, '\",\"runId\":\"', pipeline().RunId, '\",\"status\":\"FAILED\"}')",
                         "type": "Expression"
@@ -311,6 +310,9 @@
                 }
             }
         ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
         "parameters": {
             "input_date": {
                 "type": "string",
