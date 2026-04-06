@@ -15,7 +15,7 @@ adls_account_key = dbutils.secrets.get(scope="adls", key="adls-account-key")
 synapse_password = dbutils.secrets.get(scope="adls", key="synapse-password")
 
 # Replace with your values (same as Raw/Silver NB)
-storage_account_name = "j2dstorage04"
+storage_account_name = "j2dstorage101"
 
 # -------------------------
 # SETUP CONFIGURATION

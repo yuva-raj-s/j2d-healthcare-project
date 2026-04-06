@@ -96,13 +96,13 @@ Although you are doing this solo, the project is designed to mimic how a **real 
 **Owns:** Synapse Analytics – external tables, views, SQL optimisation
 
 ### Tasks
-- [ ] Create Synapse Analytics Workspace (`j2d-synapse`)
-- [ ] Assign Synapse Managed Identity → Storage Blob Data Reader on `j2dstorage04`
+- [ ] Create Synapse Analytics Workspace (`j2d-synapse-101`)
+- [ ] Assign Synapse Managed Identity → Storage Blob Data Reader on `j2dstorage101`
 - [ ] In Synapse Studio → Run `synapse_external_tables.sql` (creates DB, credential, data source, external tables)
 - [ ] Run `synapse_gold_views.sql` (creates Power BI views with business logic)
 - [ ] Validate all external tables return rows
 - [ ] Document Synapse serverless endpoint URL for BI team:
-  - Format: `j2d-synapse-ondemand.sql.azuresynapse.net`
+  - Format: `j2d-synapse-101-ondemand.sql.azuresynapse.net`
 
 **Deliverable:** 6 external tables + 6 views queryable in Synapse Serverless pool
 

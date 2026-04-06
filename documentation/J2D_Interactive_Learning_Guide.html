@@ -525,7 +525,7 @@ ul.body-list li{margin-bottom:4px}
       <div class="concept-body">
         <div class="concept-why"><span class="label-why">Why</span><br>Power BI doesn't natively read Parquet from ADLS. Synapse Serverless SQL acts as a virtual query engine — it reads Parquet files on the fly using OPENROWSET, exposes them as SQL views, and Power BI connects to those views via a standard SQL endpoint. No data duplication. Cost: ~$1/month.</div>
         <div class="concept-what"><span class="label-what">What</span><br>External tables + 6 business views: Finance, Admissions, Device Utilization, Medicine Stock, Claim Status, Rejected Claims.</div>
-        <div class="concept-how"><span class="label-how">How it fits</span><br>Reads goldlayer Parquet via Managed Identity → Power BI connects DirectQuery to <code>j2d-synapse-ondemand.sql.azuresynapse.net</code>.</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Reads goldlayer Parquet via Managed Identity → Power BI connects DirectQuery to <code>j2d-synapse-101-ondemand.sql.azuresynapse.net</code>.</div>
       </div>
     </div>
     <div class="concept-card" onclick="toggleConcept(this)">
@@ -770,7 +770,7 @@ ul.body-list li{margin-bottom:4px}
       </div>
       <div class="ltab-content ltab-pane">
         <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Storage Account</span>
-<span class="ck">Name               :</span> <span class="cs">j2dstorage04</span>
+<span class="ck">Name               :</span> <span class="cs">j2dstorage101</span>
 <span class="ck">Resource group     :</span> <span class="cs">rg-j2d-healthcare</span>
 <span class="ck">Performance        :</span> <span class="cs">Standard · LRS (Locally Redundant)</span>
 <span class="ck">Hierarchical NS    :</span> <span class="cs">✅ ENABLED</span>  <span class="cc"># CRITICAL — this makes it ADLS Gen2</span>
@@ -787,7 +787,7 @@ ul.body-list li{margin-bottom:4px}
       </div>
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Storage account j2dstorage04 created with Hierarchical Namespace ENABLED</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Storage account j2dstorage101 created with Hierarchical Namespace ENABLED</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container rawlayer created</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container bronzelayer created</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Container goldlayer created</li>
@@ -823,7 +823,7 @@ ul.body-list li{margin-bottom:4px}
       </div>
       <div class="ltab-content ltab-pane">
         <div class="code-wrap"><pre><span class="cc"># Portal → + Create → Key Vault</span>
-<span class="ck">Name        :</span> <span class="cs">j2d-keyvault</span>
+<span class="ck">Name        :</span> <span class="cs">j2d-keyvault101</span>
 <span class="ck">Region      :</span> <span class="cs">East US</span>
 <span class="ck">Pricing tier:</span> <span class="cs">Standard</span>
 
@@ -842,11 +842,11 @@ ul.body-list li{margin-bottom:4px}
 <span class="cc"># Also create Databricks Secret Scope:</span>
 <span class="cc"># Databricks → Settings → Secret Scopes → + Add</span>
 <span class="ck">Scope name    :</span> <span class="cs">j2d-kv-scope</span>
-<span class="ck">Key Vault URL :</span> <span class="cs">https://j2d-keyvault.vault.azure.net/</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="ck">Key Vault URL :</span> <span class="cs">https://j2d-keyvault101.vault.azure.net/</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       </div>
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Key Vault j2d-keyvault created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Key Vault j2d-keyvault101 created</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 secrets added (mysql, azuresql, postgresql, adls, synapse passwords)</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADF Managed Identity granted Get/List access to Key Vault</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Secret Scope j2d-kv-scope linked to Key Vault</li>
@@ -917,7 +917,7 @@ ul.body-list li{margin-bottom:4px}
           <tr><td><code>LS_MySQL_Hospital</code></td><td>Azure MySQL</td><td>j2d-mysql-server.mysql.database.azure.com · j2d_hospital_db · user: j2dadmin@j2d-mysql-server · pwd from Key Vault</td></tr>
           <tr><td><code>LS_AzureSQL_Device</code></td><td>Azure SQL Database</td><td>j2d-sqlserver.database.windows.net · j2d_device_db · SQL Auth · pwd from Key Vault</td></tr>
           <tr><td><code>LS_PostgreSQL_Pharma</code></td><td>Azure PostgreSQL</td><td>j2d-pg-server.postgres.database.azure.com · j2d_pharma_db · pwd from Key Vault</td></tr>
-          <tr><td><code>LS_ADLS_RawLayer</code></td><td>ADLS Gen2</td><td>j2dstorage04 · Account Key from Key Vault</td></tr>
+          <tr><td><code>LS_ADLS_RawLayer</code></td><td>ADLS Gen2</td><td>j2dstorage101 · Account Key from Key Vault</td></tr>
           <tr><td><code>LS_AzureDatabricks</code></td><td>Azure Databricks</td><td>j2d-databricks workspace · New job cluster · 13.3 LTS · Standard_DS3_v2 · Single node · 15 min auto-terminate</td></tr>
         </table>
         <div class="callout warn"><span class="callout-icon">⚠️</span>Click <strong>Test Connection</strong> on every Linked Service. All must pass before continuing. A failed test here means ADF Copy will silently fail at runtime.</div>
@@ -979,12 +979,12 @@ ul.body-list li{margin-bottom:4px}
 
         <h3 class="sub-h">Configure ADLS Access</h3>
         <div class="code-wrap"><pre><span class="cc"># Option A: Spark Config on Cluster (Advanced → Spark Config)</span>
-<span class="cm">spark.hadoop.fs.azure.account.key.j2dstorage04.dfs.core.windows.net</span>
+<span class="cm">spark.hadoop.fs.azure.account.key.j2dstorage101.dfs.core.windows.net</span>
 <span class="co">{{secrets/j2d-kv-scope/adls-account-key}}</span>
 
 <span class="cc"># Option B: In first cell of each notebook</span>
 spark.conf.set(
-  <span class="cs">"fs.azure.account.key.j2dstorage04.dfs.core.windows.net"</span>,
+  <span class="cs">"fs.azure.account.key.j2dstorage101.dfs.core.windows.net"</span>,
   dbutils.secrets.get(scope=<span class="cs">"j2d-kv-scope"</span>, key=<span class="cs">"adls-account-key"</span>)
 )</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
 
@@ -1079,7 +1079,7 @@ dbutils.widgets.text(<span class="cs">"input_date"</span>, <span class="cs">"202
       <div class="ltab-content ltab-pane">
         <div class="callout why"><span class="callout-icon">🥇</span><div><strong>Gold_NB.py — What it does:</strong> Reads Silver Delta tables, runs business-level aggregations (weekly admission trends, revenue leakage by insurer, device utilization %, medicine stock alert levels), and writes 7 Parquet files to goldlayer. <em>Important: uses coalesce(1) so each table writes as a single Parquet file — required for Synapse's OPENROWSET to read cleanly.</em></div></div>
         <div class="code-wrap"><pre><span class="cc"># Verify 7 Parquet folders in ADLS goldlayer:</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))
 
 <span class="cc"># Should see:</span>
 <span class="cs">gold_medicine_availability/</span>
@@ -1135,16 +1135,16 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
       <div class="ltab-content ltab-pane">
         <div class="code-wrap"><pre><span class="cc"># Step 1: Create Synapse workspace</span>
 <span class="cc"># Portal → + Create → Azure Synapse Analytics</span>
-<span class="ck">Workspace name  :</span> <span class="cs">j2d-synapse</span>
-<span class="ck">Data Lake Storage:</span> <span class="cs">j2dstorage04</span>  <span class="cc"># filesystem = goldlayer</span>
+<span class="ck">Workspace name  :</span> <span class="cs">j2d-synapse-101</span>
+<span class="ck">Data Lake Storage:</span> <span class="cs">j2dstorage101</span>  <span class="cc"># filesystem = goldlayer</span>
 <span class="ck">SQL admin       :</span> <span class="cs">j2dadmin</span>
 <span class="ck">Password        :</span> <span class="cs">J2D@Synapse2026!</span>
 <span class="cc"># ⚠️ Use ONLY Serverless SQL Pool — NOT Dedicated</span>
 
 <span class="cc"># Step 2: Grant Synapse Managed Identity access to ADLS</span>
-<span class="cc"># j2dstorage04 → Access Control (IAM) → + Add role assignment</span>
+<span class="cc"># j2dstorage101 → Access Control (IAM) → + Add role assignment</span>
 <span class="ck">Role      :</span> <span class="cs">Storage Blob Data Reader</span>
-<span class="ck">Assign to :</span> <span class="cs">Managed Identity → j2d-synapse</span>
+<span class="ck">Assign to :</span> <span class="cs">Managed Identity → j2d-synapse-101</span>
 
 <span class="cc"># Step 3: Run SQL scripts in Synapse Studio</span>
 <span class="cc"># Synapse Studio → Develop → + SQL Script → Built-in pool</span>
@@ -1156,16 +1156,16 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
 <span class="cm">SELECT TOP 5 * FROM gold.vw_Finance_Summary;</span>
 
 <span class="cc"># Note down Serverless endpoint for Power BI:</span>
-<span class="cs">j2d-synapse-ondemand.sql.azuresynapse.net</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="cs">j2d-synapse-101-ondemand.sql.azuresynapse.net</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       </div>
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Synapse workspace j2d-synapse created (Serverless only)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Managed Identity granted Storage Blob Data Reader on j2dstorage04</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Synapse workspace j2d-synapse-101 created (Serverless only)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Managed Identity granted Storage Blob Data Reader on j2dstorage101</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>synapse_external_tables.sql run — all 7 external tables created</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>synapse_gold_views.sql run — 6 views created</li>
           <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div">SELECT COUNT(*) > 0 for at least one external table</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Serverless endpoint URL noted: j2d-synapse-ondemand.sql.azuresynapse.net</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Serverless endpoint URL noted: j2d-synapse-101-ondemand.sql.azuresynapse.net</li>
         </ul>
       </div>
       <button class="done-btn" onclick="markPhaseDone('p8')">✓ Phase 8 Complete</button>
@@ -1195,7 +1195,7 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
       <div class="ltab-content active ltab-pane">
         <div class="callout why"><span class="callout-icon">💡</span><div><strong>DirectQuery</strong> means Power BI doesn't import a copy of the data — every visual sends a SQL query to Synapse when refreshed. This means your report always shows live data without scheduled refreshes. The trade-off: slightly slower than Import mode, but for healthcare data where you want yesterday's admissions this morning, DirectQuery is correct.</div></div>
         <div class="code-wrap"><pre><span class="cc"># Power BI Desktop → Get Data → Azure → Azure Synapse Analytics SQL</span>
-<span class="ck">Server  :</span> <span class="cs">j2d-synapse-ondemand.sql.azuresynapse.net</span>
+<span class="ck">Server  :</span> <span class="cs">j2d-synapse-101-ondemand.sql.azuresynapse.net</span>
 <span class="cc"># ⚠️ Use the ondemand (Serverless) endpoint, NOT the workspace endpoint</span>
 <span class="ck">Database:</span> <span class="cs">j2d_gold_db</span>
 <span class="ck">Mode    :</span> <span class="cs">DirectQuery</span>
@@ -1311,14 +1311,14 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
 <span class="cc">-- Safe to repeat: Gold uses mode("overwrite") — no duplicates</span>
 
 <span class="cc">-- ADLS verification in Databricks notebook</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       </div>
       <div class="ltab-content ltab-pane">
         <table>
           <tr><th>Issue</th><th>Root Cause</th><th>Fix</th></tr>
           <tr><td>ADF Copy fails – MySQL</td><td>Firewall or username format</td><td>Add your IP; username must be <code>j2dadmin@j2d-mysql-server</code></td></tr>
           <tr><td>Databricks fails at ADLS write</td><td>Account key not configured</td><td>Check spark.conf.set in notebook or Cluster Spark config</td></tr>
-          <tr><td>Synapse external table empty</td><td>Managed Identity missing RBAC</td><td>Assign Storage Blob Data Reader to j2d-synapse on j2dstorage04</td></tr>
+          <tr><td>Synapse external table empty</td><td>Managed Identity missing RBAC</td><td>Assign Storage Blob Data Reader to j2d-synapse-101 on j2dstorage101</td></tr>
           <tr><td>Parquet read error in Synapse</td><td>Gold wrote Delta format</td><td>Gold_NB must use <code>.write.format("parquet")</code> not <code>.format("delta")</code></td></tr>
           <tr><td>Power BI can't connect</td><td>Wrong endpoint used</td><td>Use <code>ondemand</code> endpoint, NOT the workspace SQL endpoint</td></tr>
           <tr><td>Raw_NB exits with error</td><td>Validation failure</td><td>Read the exit message — it names the failing column/check</td></tr>
@@ -1464,11 +1464,11 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
     <div class="ref-card">
       <div class="ref-title">🏗️ Resource Names</div>
       <div class="ref-row"><span class="ref-key">Resource Group</span><span class="ref-val">rg-j2d-healthcare</span></div>
-      <div class="ref-row"><span class="ref-key">Storage Account</span><span class="ref-val">j2dstorage04</span></div>
+      <div class="ref-row"><span class="ref-key">Storage Account</span><span class="ref-val">j2dstorage101</span></div>
       <div class="ref-row"><span class="ref-key">Databricks</span><span class="ref-val">j2d-databricks</span></div>
       <div class="ref-row"><span class="ref-key">ADF</span><span class="ref-val">j2d-adf-healthcare</span></div>
-      <div class="ref-row"><span class="ref-key">Synapse</span><span class="ref-val">j2d-synapse</span></div>
-      <div class="ref-row"><span class="ref-key">Key Vault</span><span class="ref-val">j2d-keyvault</span></div>
+      <div class="ref-row"><span class="ref-key">Synapse</span><span class="ref-val">j2d-synapse-101</span></div>
+      <div class="ref-row"><span class="ref-key">Key Vault</span><span class="ref-val">j2d-keyvault101</span></div>
     </div>
     <div class="ref-card">
       <div class="ref-title">🗄️ Database Servers</div>
@@ -1476,14 +1476,14 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
       <div class="ref-row"><span class="ref-key">Azure SQL</span><span class="ref-val">j2d-sqlserver.database.windows.net</span></div>
       <div class="ref-row"><span class="ref-key">PostgreSQL</span><span class="ref-val">j2d-pg-server.postgres.database.azure.com</span></div>
       <div class="ref-row"><span class="ref-key">Admin user</span><span class="ref-val">j2dadmin</span></div>
-      <div class="ref-row"><span class="ref-key">Synapse endpoint</span><span class="ref-val">j2d-synapse-ondemand.sql.azuresynapse.net</span></div>
+      <div class="ref-row"><span class="ref-key">Synapse endpoint</span><span class="ref-val">j2d-synapse-101-ondemand.sql.azuresynapse.net</span></div>
     </div>
     <div class="ref-card">
       <div class="ref-title">💾 ADLS Paths</div>
       <div class="ref-row"><span class="ref-key">Raw CSVs</span><span class="ref-val">rawlayer/Raw_Data/</span></div>
       <div class="ref-row"><span class="ref-key">Bronze Parquet</span><span class="ref-val">bronzelayer/Staging_Data/</span></div>
       <div class="ref-row"><span class="ref-key">Gold Parquet</span><span class="ref-val">goldlayer/Gold_Data/</span></div>
-      <div class="ref-row"><span class="ref-key">ABFS prefix</span><span class="ref-val">abfss://[container]@j2dstorage04.dfs.core.windows.net/</span></div>
+      <div class="ref-row"><span class="ref-key">ABFS prefix</span><span class="ref-val">abfss://[container]@j2dstorage101.dfs.core.windows.net/</span></div>
     </div>
     <div class="ref-card">
       <div class="ref-title">⚙️ ADF Pipeline</div>
@@ -1525,7 +1525,7 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.
 <span class="cm">SELECT COUNT(*) FROM</span> gold.weekly_admissions;
 
 <span class="cc">-- Databricks: verify goldlayer folders</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))
 
 <span class="cc">-- Databricks: check Silver tables</span>
 <span class="cm">SHOW TABLES IN</span> silver;</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -1700,11 +1700,11 @@ Name   : rg-j2d-healthcare
 Region : East US
 Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
       <h4>1.2 ADLS Gen2 Containers</h4>
-      <p>Create storage account j2dstorage04 with Hierarchical Namespace enabled. Add containers: rawlayer, bronzelayer, goldlayer (all Private access).</p>
+      <p>Create storage account j2dstorage101 with Hierarchical Namespace enabled. Add containers: rawlayer, bronzelayer, goldlayer (all Private access).</p>
       <h4>1.3–1.5 Source Databases</h4>
       <p>MySQL: j2d-mysql-server (B1ms, MySQL 8.0) · Azure SQL: j2d-sqlserver (Serverless GP, auto-pause 60 min) · PostgreSQL: j2d-pg-server (B1ms). All use j2dadmin credentials, all allow Azure service connections.</p>
       <h4>1.6 ADF + 1.7 Synapse</h4>
-      <p>ADF: j2d-adf-healthcare (V2). Synapse: j2d-synapse (Serverless SQL only — no Dedicated Pool). Grant Synapse Managed Identity Storage Blob Data Reader on j2dstorage04.</p>
+      <p>ADF: j2d-adf-healthcare (V2). Synapse: j2d-synapse-101 (Serverless SQL only — no Dedicated Pool). Grant Synapse Managed Identity Storage Blob Data Reader on j2dstorage101.</p>
     </div>
     <div id="doc1-p9" class="doc-content">
       <h3>Phase 2: Azure Data Factory Setup</h3>
@@ -1726,7 +1726,7 @@ Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
       <h4>Phase 5: Synapse Setup</h4>
       <p>Synapse Studio → Develop → SQL Script → Built-in pool. Run synapse_external_tables.sql then synapse_gold_views.sql. Verify SELECT TOP 5 from each external table.</p>
       <h4>Phase 6: Power BI</h4>
-      <p>Get Data → Azure Synapse Analytics SQL → j2d-synapse-ondemand.sql.azuresynapse.net · j2d_gold_db · DirectQuery. Load 6 gold views. Build 4 pages.</p>
+      <p>Get Data → Azure Synapse Analytics SQL → j2d-synapse-101-ondemand.sql.azuresynapse.net · j2d_gold_db · DirectQuery. Load 6 gold views. Build 4 pages.</p>
     </div>
     <div id="doc1-p11" class="doc-content">
       <h3>Phase 7: Trigger Testing</h3>

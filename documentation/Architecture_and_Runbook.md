@@ -12,11 +12,11 @@ Portal > Resource Groups > + Create
 
 ---
 
-### 1.2 Create ADLS Gen2 Storage Account (Already exists: j2dstorage04)
+### 1.2 Create ADLS Gen2 Storage Account (Already exists: j2dstorage101)
 
 **Add `goldlayer` container:**
 ```
-Portal > j2dstorage04 > Containers > + Container
+Portal > j2dstorage101 > Containers > + Container
 - Name              : goldlayer
 - Public access     : Private
 ```
@@ -114,10 +114,10 @@ Portal > + Create > Data Factory
 
 ```
 Portal > + Create > Azure Synapse Analytics
-- Workspace name   : j2d-synapse
+- Workspace name   : j2d-synapse-101
 - Resource group   : rg-j2d-healthcare
 - Region           : East US
-- Data Lake Storage: Select j2dstorage04, filesystem = goldlayer
+- Data Lake Storage: Select j2dstorage101, filesystem = goldlayer
 - SQL admin        : j2dadmin
 - Password         : J2D@Synapse2026!
 ```
@@ -126,10 +126,10 @@ Portal > + Create > Azure Synapse Analytics
 
 **Grant Synapse Managed Identity access to ADLS:**
 ```
-Portal > j2dstorage04 > Access Control (IAM)
+Portal > j2dstorage101 > Access Control (IAM)
 > + Add role assignment
 > Role: Storage Blob Data Reader
-> Assign to: Managed Identity > j2d-synapse
+> Assign to: Managed Identity > j2d-synapse-101
 ```
 
 ---
@@ -178,7 +178,7 @@ Navigate to: **ADF Studio > Manage > Linked Services**
 ```
 + New > Azure Data Lake Storage Gen2
 - Name              : LS_ADLS_RawLayer
-- Storage account   : j2dstorage04
+- Storage account   : j2dstorage101
 - Test connection   : ✓ must pass
 ```
 
@@ -283,7 +283,7 @@ Step 4: Navigate to Monitor > Pipeline runs
 
 ```
 1. ADLS rawlayer:
-   Portal > j2dstorage04 > rawlayer > Raw_Data > verify 3 CSVs exist
+   Portal > j2dstorage101 > rawlayer > Raw_Data > verify 3 CSVs exist
 
 2. ADLS bronzelayer:
    bronzelayer > Staging_Data > Hospital_Data/
@@ -513,7 +513,7 @@ Workflows > J2D_Healthcare_Weekly_Job > Run Now
 ### 5.1 Open Synapse Studio
 
 ```
-Portal > j2d-synapse > Open Synapse Studio
+Portal > j2d-synapse-101 > Open Synapse Studio
 ```
 
 ### 5.2 Run SQL Scripts
@@ -541,7 +541,7 @@ SELECT TOP 5 * FROM gold.vw_Finance_Summary;
 
 ```
 Power BI Desktop > Get Data > Azure > Azure Synapse Analytics SQL
-- Server: j2d-synapse-ondemand.sql.azuresynapse.net
+- Server: j2d-synapse-101-ondemand.sql.azuresynapse.net
 - Database: j2d_gold_db
 - Data Connectivity: DirectQuery (recommended) or Import
 ```
@@ -608,7 +608,7 @@ ORDER BY load_time DESC;
 ### ADLS File Verification
 ```python
 # In Databricks notebook
-display(dbutils.fs.ls("abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"))
+display(dbutils.fs.ls("abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"))
 ```
 
 ---

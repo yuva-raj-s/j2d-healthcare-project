@@ -545,7 +545,7 @@
         <div class="step-body">
           <pre><span class="key">Portal</span> <span class="val">&gt; + Create &gt; Key Vault</span>
 
-<span class="key">Name           :</span> <span class="str">j2d-keyvault</span>
+<span class="key">Name           :</span> <span class="str">j2d-keyvault101</span>
 <span class="key">Resource group :</span> <span class="str">rg-j2d-healthcare</span>
 <span class="key">Region         :</span> <span class="str">East US</span>
 <span class="key">Pricing tier   :</span> <span class="str">Standard</span>
@@ -556,7 +556,7 @@
             <tr><td><code>mysql-password</code></td><td><code>J2D@Mysql2026!</code></td></tr>
             <tr><td><code>azuresql-password</code></td><td><code>J2D@Sql2026!</code></td></tr>
             <tr><td><code>postgresql-password</code></td><td><code>J2D@Pg2026!</code></td></tr>
-            <tr><td><code>adls-account-key</code></td><td>Storage account key from j2dstorage04</td></tr>
+            <tr><td><code>adls-account-key</code></td><td>Storage account key from j2dstorage101</td></tr>
             <tr><td><code>synapse-password</code></td><td><code>J2D@Synapse2026!</code></td></tr>
           </table>
           <h4>Grant ADF Access to Key Vault</h4>
@@ -646,7 +646,7 @@
               <div class="ls-name">LS_ADLS_RawLayer</div>
               <div class="ls-detail">
                 Type: Azure Data Lake Storage Gen2<br>
-                Storage account: j2dstorage04<br>
+                Storage account: j2dstorage101<br>
                 Auth: Account Key (from Key Vault)<br>
                 Test connection must pass ✓
               </div>
@@ -742,7 +742,7 @@
         <div class="step-body">
           <pre><span class="key">Portal</span> <span class="val">&gt; + Create &gt; Storage Account</span>
 
-<span class="key">Name               :</span> <span class="str">j2dstorage04</span>
+<span class="key">Name               :</span> <span class="str">j2dstorage101</span>
 <span class="key">Resource group     :</span> <span class="str">rg-j2d-healthcare</span>
 <span class="key">Region             :</span> <span class="str">East US</span>
 <span class="key">Performance        :</span> <span class="str">Standard</span>
@@ -805,15 +805,15 @@
         <div class="step-body">
           <p>Add the storage account key to Databricks cluster Spark config so notebooks can read/write ADLS.</p>
           <pre><span class="cmt"># Option A – Spark Config (Cluster → Edit → Advanced → Spark Config)</span>
-<span class="key">spark.hadoop.fs.azure.account.key.j2dstorage04.dfs.core.windows.net</span>
-<span class="val">{{secrets/j2d-keyvault/adls-account-key}}</span>
+<span class="key">spark.hadoop.fs.azure.account.key.j2dstorage101.dfs.core.windows.net</span>
+<span class="val">{{secrets/j2d-keyvault101/adls-account-key}}</span>
 
 <span class="cmt"># Option B – In Notebook (first cell)</span>
 <span class="cmd">spark</span>.conf.set(
-  <span class="str">"fs.azure.account.key.j2dstorage04.dfs.core.windows.net"</span>,
+  <span class="str">"fs.azure.account.key.j2dstorage101.dfs.core.windows.net"</span>,
   dbutils.secrets.get(scope=<span class="str">"j2d-kv-scope"</span>, key=<span class="str">"adls-account-key"</span>)
 )</pre>
-          <div class="info-box note"><span class="info-icon">ℹ️</span>Create a Databricks Secret Scope first: <code>Workspace → Settings → Secret Scopes → + Add → Link to Azure Key Vault j2d-keyvault</code></div>
+          <div class="info-box note"><span class="info-icon">ℹ️</span>Create a Databricks Secret Scope first: <code>Workspace → Settings → Secret Scopes → + Add → Link to Azure Key Vault j2d-keyvault101</code></div>
           <button class="done-btn" onclick="markDone('s13')">✓ Mark complete</button>
         </div>
       </div>
@@ -936,7 +936,7 @@
 <span class="str">goldlayer/Gold_Data/gold_rejected_claims/</span>
 <span class="str">goldlayer/Gold_Data/gold_patient_status/</span></pre>
           <pre><span class="cmt"># Verify in Databricks</span>
-display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage04.dfs.core.windows.net/Gold_Data/"</span>))</pre>
+display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))</pre>
           <ul class="checklist">
             <li onclick="toggleCheck(this)"><div class="chk"></div>All 7 Parquet folders visible in ADLS goldlayer</li>
             <li onclick="toggleCheck(this)"><div class="chk"></div>Parquet written with coalesce(1) for Synapse compatibility</li>
@@ -1004,18 +1004,18 @@ display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage04.dfs.core
         <div class="step-body">
           <pre><span class="key">Portal</span> <span class="val">&gt; + Create &gt; Azure Synapse Analytics</span>
 
-<span class="key">Workspace name  :</span> <span class="str">j2d-synapse</span>
+<span class="key">Workspace name  :</span> <span class="str">j2d-synapse-101</span>
 <span class="key">Resource group  :</span> <span class="str">rg-j2d-healthcare</span>
 <span class="key">Region          :</span> <span class="str">East US</span>
-<span class="key">Data Lake Storage:</span> <span class="str">j2dstorage04</span>  <span class="cmt"># filesystem = goldlayer</span>
+<span class="key">Data Lake Storage:</span> <span class="str">j2dstorage101</span>  <span class="cmt"># filesystem = goldlayer</span>
 <span class="key">SQL admin       :</span> <span class="str">j2dadmin</span>
 <span class="key">Password        :</span> <span class="str">J2D@Synapse2026!</span></pre>
           <div class="info-box err"><span class="info-icon">🛑</span>Do NOT create a Dedicated SQL Pool — use only the built-in Serverless SQL Pool (charged per TB scanned, ~$1/mo for this project).</div>
           <h4>Grant Managed Identity Access to ADLS</h4>
-          <pre><span class="key">Portal</span> <span class="val">&gt; j2dstorage04 &gt; Access Control (IAM)</span>
+          <pre><span class="key">Portal</span> <span class="val">&gt; j2dstorage101 &gt; Access Control (IAM)</span>
 <span class="val">&gt; + Add role assignment</span>
 <span class="key">Role      :</span> <span class="str">Storage Blob Data Reader</span>
-<span class="key">Assign to :</span> <span class="str">Managed Identity → j2d-synapse</span></pre>
+<span class="key">Assign to :</span> <span class="str">Managed Identity → j2d-synapse-101</span></pre>
           <button class="done-btn" onclick="markDone('s19')">✓ Mark complete</button>
         </div>
       </div>
@@ -1051,7 +1051,7 @@ display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage04.dfs.core
           </div>
           <h4>Note down Serverless Endpoint URL</h4>
           <pre><span class="key">Synapse Overview</span> <span class="val">&gt; Serverless SQL endpoint</span>
-<span class="cmt"># Format: j2d-synapse-ondemand.sql.azuresynapse.net</span>
+<span class="cmt"># Format: j2d-synapse-101-ondemand.sql.azuresynapse.net</span>
 <span class="cmt"># This is what Power BI connects to — NOT the dedicated endpoint</span></pre>
           <button class="done-btn" onclick="markDone('s20')">✓ Mark complete</button>
         </div>
@@ -1143,7 +1143,7 @@ display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage04.dfs.core
         <div class="step-body">
           <pre><span class="key">Power BI Desktop</span> <span class="val">&gt; Get Data &gt; Azure &gt; Azure Synapse Analytics SQL</span>
 
-<span class="key">Server          :</span> <span class="str">j2d-synapse-ondemand.sql.azuresynapse.net</span>
+<span class="key">Server          :</span> <span class="str">j2d-synapse-101-ondemand.sql.azuresynapse.net</span>
 <span class="key">Database        :</span> <span class="str">j2d_gold_db</span>
 <span class="key">Data Connectivity:</span> <span class="str">DirectQuery</span>  <span class="cmt"># always live data</span></pre>
           <h4>Select These Views</h4>
@@ -1314,7 +1314,7 @@ display(dbutils.fs.ls(<span class="str">"abfss://goldlayer@j2dstorage04.dfs.core
             <tr><th>Issue</th><th>Resolution</th></tr>
             <tr><td>ADF Copy fails – MySQL</td><td>Verify firewall allows Azure services; check username format <code>j2dadmin@j2d-mysql-server</code></td></tr>
             <tr><td>Databricks notebook fails at ADLS write</td><td>Verify spark.conf.set with correct account key or Key Vault secret scope</td></tr>
-            <tr><td>Synapse external table shows no rows</td><td>Check Managed Identity has Storage Blob Data Reader on j2dstorage04</td></tr>
+            <tr><td>Synapse external table shows no rows</td><td>Check Managed Identity has Storage Blob Data Reader on j2dstorage101</td></tr>
             <tr><td>Parquet read error in Synapse</td><td>Ensure Gold_NB wrote <code>coalesce(1).write.format("parquet")</code> not Delta</td></tr>
             <tr><td>Power BI can't connect</td><td>Use "Serverless SQL endpoint" not "Dedicated SQL endpoint" from Synapse overview</td></tr>
             <tr><td>Logic App not firing</td><td>Confirm Action Group is attached to Alert Rule; check Logic App run history</td></tr>
