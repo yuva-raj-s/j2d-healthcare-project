@@ -16,8 +16,7 @@
                 "userProperties": [],
                 "typeProperties": {
                     "source": {
-                        "type": "MySqlSource",
-                        "query": "SELECT event_id, patient_id, patient_gender, patient_dob, insurance_id, insurance_name, department, doctor_id, bed_id, bed_type, hospital_id, admission_time, discharge_time, billed_amount, approved_amount, claim_status FROM hospital_events"
+                        "type": "MySqlSource"
                     },
                     "sink": {
                         "type": "DelimitedTextSink",
@@ -26,7 +25,7 @@
                         },
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
-                            "quoteAllText": false,
+                            "quoteAllText": true,
                             "fileExtension": ".csv"
                         }
                     },
@@ -43,15 +42,13 @@
                 "inputs": [
                     {
                         "referenceName": "DS_MySQL_HospitalEvents",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Hospital",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ]
             },
@@ -69,7 +66,6 @@
                 "typeProperties": {
                     "source": {
                         "type": "AzureSqlSource",
-                        "sqlReaderQuery": "SELECT hospital_id, device_id, device_type, total_units, in_use_units, week FROM dbo.device_events",
                         "queryTimeout": "02:00:00",
                         "partitionOption": "None"
                     },
@@ -80,7 +76,7 @@
                         },
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
-                            "quoteAllText": false,
+                            "quoteAllText": true,
                             "fileExtension": ".csv"
                         }
                     },
@@ -89,15 +85,13 @@
                 "inputs": [
                     {
                         "referenceName": "DS_AzureSQL_DeviceEvents",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Device",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ]
             },
@@ -114,8 +108,7 @@
                 "userProperties": [],
                 "typeProperties": {
                     "source": {
-                        "type": "PostgreSqlV2Source",
-                        "query": "SELECT hospital_id, medicine_id, medicine_name, category, total_stock, available_stock, reorder_level, expiry_date, supplier_id, report_week FROM pharma_events"
+                        "type": "PostgreSqlV2Source"
                     },
                     "sink": {
                         "type": "DelimitedTextSink",
@@ -124,7 +117,7 @@
                         },
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
-                            "quoteAllText": false,
+                            "quoteAllText": true,
                             "fileExtension": ".csv"
                         }
                     },
@@ -133,15 +126,13 @@
                 "inputs": [
                     {
                         "referenceName": "DS_PostgreSQL_PharmaEvents",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ],
                 "outputs": [
                     {
                         "referenceName": "DS_ADLS_Raw_Pharma",
-                        "type": "DatasetReference",
-                        "parameters": {}
+                        "type": "DatasetReference"
                     }
                 ]
             },
@@ -152,15 +143,21 @@
                 "dependsOn": [
                     {
                         "activity": "Copy_Hospital_From_MySQL",
-                        "dependencyConditions": [ "Succeeded" ]
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
                     },
                     {
                         "activity": "Copy_Device_From_AzureSQL",
-                        "dependencyConditions": [ "Succeeded" ]
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
                     },
                     {
                         "activity": "Copy_Pharma_From_PostgreSQL",
-                        "dependencyConditions": [ "Succeeded" ]
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
                     }
                 ],
                 "policy": {
@@ -200,7 +197,9 @@
                 "dependsOn": [
                     {
                         "activity": "Run_Raw_NB",
-                        "dependencyConditions": [ "Succeeded" ]
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
                     }
                 ],
                 "policy": {
@@ -240,7 +239,9 @@
                 "dependsOn": [
                     {
                         "activity": "Run_Silver_NB",
-                        "dependencyConditions": [ "Succeeded" ]
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
                     }
                 ],
                 "policy": {
@@ -280,15 +281,21 @@
                 "dependsOn": [
                     {
                         "activity": "Run_Raw_NB",
-                        "dependencyConditions": [ "Failed" ]
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
                     },
                     {
                         "activity": "Run_Silver_NB",
-                        "dependencyConditions": [ "Failed" ]
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
                     },
                     {
                         "activity": "Run_Gold_NB",
-                        "dependencyConditions": [ "Failed" ]
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
                     }
                 ],
                 "policy": {
@@ -310,9 +317,6 @@
                 }
             }
         ],
-        "policy": {
-            "elapsedTimeMetric": {}
-        },
         "parameters": {
             "input_date": {
                 "type": "string",
