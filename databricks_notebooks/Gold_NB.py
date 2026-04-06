@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/kattayashu2020@gmail.com/Helper_NB"
+# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
 
 # COMMAND ----------
 

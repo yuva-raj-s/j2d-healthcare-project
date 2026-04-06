@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/kattayashu2020@gmail.com/Helper_NB"
+# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
 
 # COMMAND ----------
 
@@ -54,9 +54,9 @@ print(prev_month_full_name)
 
 # COMMAND ----------
 
-hospital_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Hospital_Data/'
-device_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Device_Data/'
-pharma_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Pharma_Data/'
+hospital_bronze_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Hospital_Data/"
+device_bronze_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Device_Data/"
+pharma_bronze_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Pharma_Data/"
 
 # COMMAND ----------
 

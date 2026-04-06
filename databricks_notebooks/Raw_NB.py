@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/kattayashu2020@gmail.com/Helper_NB"
+# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
 
 # COMMAND ----------
 
@@ -17,6 +17,7 @@ synapse_password = dbutils.secrets.get(scope="adls", key="synapse-password")
 # Replace with your values
 storage_account_name = "j2dstorage04"
 container_name = "rawlayer"
+bronze_container = "bronzelayer"
 
 # -------------------------
 # SETUP CONFIGURATION
@@ -54,7 +55,7 @@ print(prev_month_full_name)
 
 # COMMAND ----------
 
-display(dbutils.fs.ls("abfss://rawlayer@j2dstorage04.dfs.core.windows.net/Raw_Data/"))
+display(dbutils.fs.ls(f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Raw_Data/"))
 
 # COMMAND ----------
 
@@ -68,16 +69,17 @@ Three source files to process
 # COMMAND ----------
 
 # DBTITLE 1,Set File Paths for January 2026 Raw Event Data
-hospital_raw_path='abfss://rawlayer@j2dstorage04.dfs.core.windows.net/Raw_Data/Hospital_events_January_2026.csv'
-device_raw_path='abfss://rawlayer@j2dstorage04.dfs.core.windows.net/Raw_Data/Device_events_January_2026.csv'
-pharma_raw_path='abfss://rawlayer@j2dstorage04.dfs.core.windows.net/Raw_Data/Pharma_events_January_2026.csv'
+prev_year = prev_month_date.strftime("%Y")
+hospital_raw_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Raw_Data/Hospital_events_{prev_month_full_name}_{prev_year}.csv"
+device_raw_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Raw_Data/Device_events_{prev_month_full_name}_{prev_year}.csv"
+pharma_raw_path=f"abfss://{container_name}@{storage_account_name}.dfs.core.windows.net/Raw_Data/Pharma_events_{prev_month_full_name}_{prev_year}.csv"
 
 # COMMAND ----------
 
 # DBTITLE 1,Define Storage Paths for Hospital Device and Pharma Dat ...
-hospital_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Hospital_Data/'
-device_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Device_Data/'
-pharma_bronze_path='abfss://bronzelayer@j2dstorage04.dfs.core.windows.net/Staging_Data/Pharma_Data/'
+hospital_bronze_path=f"abfss://{bronze_container}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Hospital_Data/"
+device_bronze_path=f"abfss://{bronze_container}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Device_Data/"
+pharma_bronze_path=f"abfss://{bronze_container}@{storage_account_name}.dfs.core.windows.net/Staging_Data/Pharma_Data/"
 
 # COMMAND ----------
 
