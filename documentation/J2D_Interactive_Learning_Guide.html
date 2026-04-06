@@ -443,6 +443,7 @@ ul.body-list li{margin-bottom:4px}
       <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p8'),200)"><em class="nav-icon">🏛️</em>Synapse<span class="nav-badge">8</span></a>
       <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p9'),200)"><em class="nav-icon">📊</em>Power BI<span class="nav-badge">9</span></a>
       <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p10'),200)"><em class="nav-icon">🔍</em>Verify & Monitor<span class="nav-badge">10</span></a>
+      <a class="nav-link" onclick="showSection('guide',null);setTimeout(()=>openPhase('p11'),200)"><em class="nav-icon">📧</em>Logic Apps Alerting<span class="nav-badge">11</span></a>
     </div>
     <div class="sidebar-footer">
       <div class="prog-label">Setup progress</div>
@@ -1328,6 +1329,59 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
     </div>
   </div>
   </div>
+
+  <!-- ───── PHASE 11 ───── -->
+  <div class="phase-block">
+  <div class="phase-accordion" id="p11">
+    <div class="phase-trigger" onclick="togglePhase('p11')">
+      <div class="ph-num">11</div>
+      <div class="ph-info">
+        <div class="ph-title">Logic App Alerting</div>
+        <div class="ph-desc">Configure automated email alerts on pipeline failure</div>
+        <div class="ph-tags"><span class="ph-tag tag-config">Logic Apps</span><span class="ph-tag tag-run">ADF Webhook</span></div>
+      </div>
+      <div class="ph-right"><span class="ph-est">~10 min</span><em class="ph-chevron">▶</em></div>
+    </div>
+    <div class="phase-body">
+      <div class="learn-tabs">
+        <button class="ltab active" onclick="switchLearnTab(this,'p11')">🤔 Why</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p11')">📋 What to do</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p11')">✅ Checklist</button>
+      </div>
+      <div class="ltab-content active ltab-pane">
+        <div class="callout why"><span class="callout-icon">💡</span><div>Silent failures are dangerous in data pipelines. A Logic App provides a simple Serverless endpoint to send emails to the data engineering team immediately when the ADF pipeline experiences a fault or empty data load.</div></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">11.1 Create the Logic App</h3>
+        <div class="code-wrap"><pre><span class="cc"># Portal → Create a resource → Logic App</span>
+<span class="ck">Name           :</span> <span class="cs">LA_PipelineFailure_Email</span>
+<span class="ck">Resource group :</span> <span class="cs">rg-j2d-healthcare</span>
+<span class="ck">Plan type      :</span> <span class="cs">Consumption</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">11.2 Configure the Workflow</h3>
+        <div class="code-wrap"><pre><span class="cc"># Go to Logic App Designer</span>
+<span class="cc"># 1. Trigger: 'When a HTTP request is received'</span>
+<span class="cc"># 2. Action: 'Office 365 Outlook - Send an email (V2)'</span>
+<span class="ck">To             :</span> <span class="cs">your-email@example.com</span>
+<span class="ck">Subject        :</span> <span class="cs">ADF Pipeline Failed</span>
+<span class="ck">Body           :</span> <span class="cs">The pipeline failed. Check ADF monitor.</span>
+<span class="cc"># Save and copy the HTTP POST URL generated in the Trigger.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">11.3 Connect ADF to Logic App</h3>
+        <div class="code-wrap"><pre><span class="cc"># In ADF (PL_J2D_HealthcareIngest_Enhanced)</span>
+<span class="cc"># Go to the 'ACT_WebHook_AlertOnFailure' activity</span>
+<span class="ck">URL            :</span> <span class="cs">[Paste Logic App HTTP URL]</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+      <div class="ltab-content ltab-pane">
+        <ul class="checklist">
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Logic App LA_PipelineFailure_Email created in Consumption tier</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>HTTP POST URL generated and copied</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Web activity URL updated in ADF</li>
+        </ul>
+      </div>
+      <button class="done-btn" onclick="markPhaseDone('p11')">✓ Phase 11 Complete</button>
+    </div>
+  </div>
+  </div>
+
 
 </div><!-- /guide -->
 

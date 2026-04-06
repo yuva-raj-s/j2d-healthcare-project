@@ -7,12 +7,20 @@
 # CONFIGURATION
 # -------------------------
 
-# Retrieve secrets from Key Vault (Scope: adls)
-mysql_password = dbutils.secrets.get(scope="adls", key="mysql-password")
-azuresql_password = dbutils.secrets.get(scope="adls", key="azuresql-password")
-postgresql_password = dbutils.secrets.get(scope="adls", key="postgresql-password")
-adls_account_key = dbutils.secrets.get(scope="adls", key="adls-account-key")
-synapse_password = dbutils.secrets.get(scope="adls", key="synapse-password")
+# Retrieve secrets from Key Vault
+import os
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
+
+KVUri = "https://j2d-keyvault101.vault.azure.net/"
+credential = DefaultAzureCredential()
+client = SecretClient(vault_url=KVUri, credential=credential)
+
+mysql_password = client.get_secret("mysql-password").value
+azuresql_password = client.get_secret("azuresql-password").value
+postgresql_password = client.get_secret("postgresql-password").value
+adls_account_key = client.get_secret("adls-account-key").value
+synapse_password = client.get_secret("synapse-password").value
 
 # Replace with your values (same as Raw/Silver NB)
 storage_account_name = "j2dstorage101"
