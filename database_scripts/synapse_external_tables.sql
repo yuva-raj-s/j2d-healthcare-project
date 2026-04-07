@@ -1,7 +1,7 @@
 -- ============================================================
 -- J2D Healthcare Project
--- Azure Synapse Analytics – Serverless SQL Pool
--- External Tables pointing to Gold Parquet files in ADLS Gen2
+-- Azure Synapse Analytics – Serverless SQL Pool (j2d-synapse-101)
+-- External Tables pointing to Gold Parquet files in ADLS Gen2 (j2dstorage101)
 -- Run in: Synapse Studio → Develop → New SQL Script
 -- Pool   : Built-in (Serverless SQL Pool – FREE per query)
 -- ============================================================
@@ -27,7 +27,7 @@ GO
 -- ============================================================
 -- STEP 3: Create Database Scoped Credential
 -- Uses Managed Identity of Synapse workspace (no key needed)
--- Make sure Synapse Managed Identity has "Storage Blob Data Reader"
+-- Make sure your Synapse Managed Identity (j2d-synapse-101) has "Storage Blob Data Reader"
 -- role on the j2dstorage101 ADLS account.
 -- ============================================================
 CREATE DATABASE SCOPED CREDENTIAL SynapseGoldCredential

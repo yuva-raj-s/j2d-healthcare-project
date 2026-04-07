@@ -1,9 +1,9 @@
 -- ============================================================
--- J2D Healthcare Project
+-- J2D Healthcare Project (Workspace: j2d-synapse-101)
 -- Synapse Gold Views – Power BI Ready
 -- Run AFTER synapse_external_tables.sql
 -- These views add business-friendly column names and filters
--- for direct use in Power BI via DirectQuery
+-- for direct use in Power BI via DirectQuery connected to j2d_gold_db
 -- ============================================================
 
 USE j2d_gold_db;
