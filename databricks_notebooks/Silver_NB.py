@@ -36,11 +36,7 @@ spark.conf.set(
 
 # COMMAND ----------
 
-dbutils.widgets.text("pipeline_name", "")
-dbutils.widgets.text("notebook_name", "")
-dbutils.widgets.text("run_id", "")
-dbutils.widgets.text("source", "")
-dbutils.widgets.text("input_date", "")
+
 
 
 pipeline_name = dbutils.widgets.get("pipeline_name")

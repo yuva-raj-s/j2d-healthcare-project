@@ -336,6 +336,8 @@
                                 "pipeline_name": { "value": "@pipeline().Pipeline", "type": "Expression" },
                                 "notebook_name": "silver_nb",
                                 "run_id": { "value": "@pipeline().RunId", "type": "Expression" },
+                                "source": "MySQL|AzureSQL|PostgreSQL",
+                                "input_date": { "value": "@concat(replace(pipeline().parameters.report_month, '-', ''), '01')", "type": "Expression" },
                                 "report_month": { "value": "@pipeline().parameters.report_month", "type": "Expression" }
                             }
                         },
@@ -366,6 +368,8 @@
                                 "pipeline_name": { "value": "@pipeline().Pipeline", "type": "Expression" },
                                 "notebook_name": "gold_nb",
                                 "run_id": { "value": "@pipeline().RunId", "type": "Expression" },
+                                "source": "MySQL|AzureSQL|PostgreSQL",
+                                "input_date": { "value": "@concat(replace(pipeline().parameters.report_month, '-', ''), '01')", "type": "Expression" },
                                 "report_month": { "value": "@pipeline().parameters.report_month", "type": "Expression" }
                             }
                         },

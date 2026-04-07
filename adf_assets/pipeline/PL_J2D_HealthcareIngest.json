@@ -1,7 +1,7 @@
 {
     "name": "PL_J2D_HealthcareIngest",
     "properties": {
-        "description": "J2D Healthcare – End-to-end weekly ingestion pipeline. Copies Hospital (MySQL), Device (Azure SQL), Pharma (PostgreSQL) to Raw layer, then triggers Raw → Silver → Gold Databricks notebooks.",
+        "description": "J2D Healthcare – End-to-end weekly parameter-driven ingestion pipeline. Copies Hospital (MySQL), Device (Azure SQL), Pharma (PostgreSQL) to Raw layer, then triggers Raw → Silver → Gold Databricks notebooks.",
         "activities": [
             {
                 "name": "Copy_Hospital_From_MySQL",

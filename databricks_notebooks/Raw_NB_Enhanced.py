@@ -27,13 +27,6 @@ storage_account_name = "j2dstorage101"
 # COMMAND ----------
 
 # Widget Definitions
-dbutils.widgets.text("pipeline_name", "")
-dbutils.widgets.text("notebook_name", "")
-dbutils.widgets.text("run_id", "")
-dbutils.widgets.text("source", "")
-dbutils.widgets.text("report_month", "") # Changed from input_date to report_month as per pipeline enhancement
-dbutils.widgets.text("raw_container", "rawlayer")
-dbutils.widgets.text("bronze_container", "bronzelayer")
 
 pipeline_name = dbutils.widgets.get("pipeline_name")
 notebook_name = dbutils.widgets.get("notebook_name")
