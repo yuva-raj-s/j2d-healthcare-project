@@ -1,3 +1,6 @@
+%pip install azure-identity azure-keyvault-secrets
+dbutils.library.restartPython()
+
 # Databricks notebook source
 from datetime import datetime
 from dateutil.relativedelta import relativedelta

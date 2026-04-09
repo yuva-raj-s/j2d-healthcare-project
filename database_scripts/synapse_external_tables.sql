@@ -6,61 +6,35 @@
 -- Pool   : Built-in (Serverless SQL Pool – FREE per query)
 -- ============================================================
 
--- ============================================================
--- STEP 1: Create a dedicated database in Serverless pool
--- ============================================================
-CREATE DATABASE IF NOT EXISTS j2d_gold_db;
+-- 1. Drop the external tables first
+DROP EXTERNAL TABLE gold.medicine_availability;
+DROP EXTERNAL TABLE gold.device_availability;
+DROP EXTERNAL TABLE gold.finance_weekly;
+DROP EXTERNAL TABLE gold.weekly_admissions;
+DROP EXTERNAL TABLE gold.claim_status_summary;
+DROP EXTERNAL TABLE gold.rejected_claims;
+DROP EXTERNAL TABLE gold.patient_status;
 GO
 
-USE j2d_gold_db;
+-- 2. Drop the data source
+DROP EXTERNAL DATA SOURCE GoldLayerDataSource;
 GO
 
--- ============================================================
--- STEP 2: Create Master Key (required for credential)
--- ============================================================
-IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
-BEGIN
-    CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'J2D@Synapse#2026!';
-END
+-- 3. Now drop and recreate the credential
+DROP DATABASE SCOPED CREDENTIAL SynapseGoldCredential;
 GO
 
--- ============================================================
--- STEP 3: Create Database Scoped Credential
--- Uses Managed Identity of Synapse workspace (no key needed)
--- Make sure your Synapse Managed Identity (j2d-synapse-101) has "Storage Blob Data Reader"
--- role on the j2dstorage101 ADLS account.
--- ============================================================
 CREATE DATABASE SCOPED CREDENTIAL SynapseGoldCredential
 WITH IDENTITY = 'Managed Identity';
 GO
 
--- ============================================================
--- STEP 4: Create External Data Source – pointing to goldlayer
--- Replace j2dstorage101 with your actual storage account name
--- ============================================================
-IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'GoldLayerDataSource')
-BEGIN
-    CREATE EXTERNAL DATA SOURCE GoldLayerDataSource
-    WITH (
-        LOCATION   = 'abfss://goldlayer@j2dstorage101.dfs.core.windows.net',
-        CREDENTIAL = SynapseGoldCredential
-    );
-END
+-- 4. Recreate the data source
+CREATE EXTERNAL DATA SOURCE GoldLayerDataSource
+WITH (
+    LOCATION   = 'abfss://goldlayer@j2dstorage101.dfs.core.windows.net',
+    CREDENTIAL = SynapseGoldCredential
+);
 GO
-
--- ============================================================
--- STEP 5: Create External File Format – Parquet
--- ============================================================
-IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'ParquetFormat')
-BEGIN
-    CREATE EXTERNAL FILE FORMAT ParquetFormat
-    WITH (
-        FORMAT_TYPE = PARQUET,
-        DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'
-    );
-END
-GO
-
 -- ============================================================
 -- STEP 6: Create Gold Schema
 -- ============================================================
