@@ -4,36 +4,11 @@
 # COMMAND ----------
 
 # -------------------------
-# CONFIGURATION
+# NOTEBOOK-SPECIFIC CONFIGURATION
+# (secrets, ADLS conf, CATALOG, and AUDIT_TABLE are provided by Helper_NB)
 # -------------------------
-
-# Retrieve secrets from Key Vault
-import os
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
-
-KVUri = "https://j2d-keyvault101.vault.azure.net/"
-credential = DefaultAzureCredential()
-client = SecretClient(vault_url=KVUri, credential=credential)
-
-mysql_password = client.get_secret("mysql-password").value
-azuresql_password = client.get_secret("azuresql-password").value
-postgresql_password = client.get_secret("postgresql-password").value
-adls_account_key = client.get_secret("adls-account-key").value
-synapse_password = client.get_secret("synapse-password").value
-
-# Replace with your values
-storage_account_name = "j2dstorage101"
-container_name = "rawlayer"
+container_name   = "rawlayer"
 bronze_container = "bronzelayer"
-
-# -------------------------
-# SETUP CONFIGURATION
-# -------------------------
-spark.conf.set(
-  f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-  adls_account_key
-)
 
 # COMMAND ----------
 
@@ -342,41 +317,15 @@ pharmacy_df.coalesce(1).write.option("header", True).format("parquet").mode("ove
 
 # COMMAND ----------
 
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
-
-audit_schema = StructType([
-    StructField("pipeline_name", StringType(), True),
-    StructField("notebook_name", StringType(), True),
-    StructField("run_id", StringType(), True),
-    StructField("source", StringType(), True),
-    StructField("layer", StringType(), True),
-    StructField("record_count", IntegerType(), True),
-    StructField("load_time", DateType(), True),
-    StructField("status", StringType(), True),
-    StructField("report_month", StringType(), True)
-])
-
-from pyspark.sql.functions import lit, current_date
-
-def write_audit_record(df, layer, report_month):
-    audit_df = spark.createDataFrame(
-        [(pipeline_name, notebook_name, run_id, source, layer, df.count(), date.today(), "Success", report_month)],
-        schema=audit_schema
-    )
-    audit_df.write.mode("append").saveAsTable("J2D_Audit_table")
-
-# COMMAND ----------
-
-from datetime import date  # ensure date is available before audit writes
-
-write_audit_record(hospital_new_df, "raw", prev_month_full_name)
-write_audit_record(device_new_df,   "raw", prev_month_full_name)
-write_audit_record(pharmacy_df,     "raw", prev_month_full_name)
+# Audit writes — delegated to write_audit_record() from Helper_NB
+write_audit_record(pipeline_name, notebook_name, run_id, source, "raw", hospital_new_df.count(), "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, source, "raw", device_new_df.count(),   "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, source, "raw", pharmacy_df.count(),     "Success", prev_month_full_name)
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select * from J2D_Audit_table where notebook_name='raw_nb'
+# MAGIC select * from j2d_databricks_04.default.J2D_Audit_table where notebook_name='raw_nb'
 
 # COMMAND ----------
 

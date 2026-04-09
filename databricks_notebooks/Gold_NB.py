@@ -4,34 +4,9 @@
 # COMMAND ----------
 
 # -------------------------
-# CONFIGURATION
+# NOTEBOOK-SPECIFIC CONFIG
+# (secrets, ADLS conf, CATALOG, and AUDIT_TABLE are provided by Helper_NB)
 # -------------------------
-
-# Retrieve secrets from Key Vault
-import os
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
-
-KVUri = "https://j2d-keyvault101.vault.azure.net/"
-credential = DefaultAzureCredential()
-client = SecretClient(vault_url=KVUri, credential=credential)
-
-mysql_password = client.get_secret("mysql-password").value
-azuresql_password = client.get_secret("azuresql-password").value
-postgresql_password = client.get_secret("postgresql-password").value
-adls_account_key = client.get_secret("adls-account-key").value
-synapse_password = client.get_secret("synapse-password").value
-
-# Replace with your values (same as Raw/Silver NB)
-storage_account_name = "j2dstorage101"
-
-# -------------------------
-# SETUP CONFIGURATION
-# -------------------------
-spark.conf.set(
-  f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-  adls_account_key
-)
 
 # COMMAND ----------
 
@@ -95,6 +70,7 @@ for path in [
 
 # Unity Catalog qualified table names: <catalog>.<schema>.<table>
 CATALOG = "j2d_databricks_04"
+AUDIT_TABLE = f"{CATALOG}.default.J2D_Audit_table"
 
 fact_medicine_inventory_df = spark.table(f"{CATALOG}.silver.fact_medicine_inventory")
 dim_medicine_df            = spark.table(f"{CATALOG}.silver.dim_medicine")
@@ -400,45 +376,20 @@ print(f"[SUCCESS] gold_patient_status written to: {gold_patient_status_path}")
 # AUDIT LOGGING
 # =========================================================
 
-from pyspark.sql.types import (
-    StructType, StructField, StringType, IntegerType, DateType
-)
-
-audit_schema = StructType([
-    StructField("pipeline_name", StringType(), True),
-    StructField("notebook_name", StringType(), True),
-    StructField("run_id",        StringType(), True),
-    StructField("source",        StringType(), True),
-    StructField("layer",         StringType(), True),
-    StructField("record_count",  IntegerType(), True),
-    StructField("load_time",     DateType(),   True),
-    StructField("status",        StringType(), True),
-    StructField("report_month",  StringType(), True),
-])
-
-def write_audit_record(df, gold_table_name, report_month):
-    audit_df = spark.createDataFrame(
-        [(pipeline_name, notebook_name, run_id, gold_table_name,
-          "gold", df.count(), date.today(), "Success", report_month)],
-        schema=audit_schema
-    )
-    audit_df.write.mode("append").saveAsTable("J2D_Audit_table")
-    print(f"  Audit record written for {gold_table_name}")
-
 print("Writing audit records for all Gold tables...")
-write_audit_record(gold_medicine_availability_df, "gold_medicine_availability", prev_month_full_name)
-write_audit_record(gold_device_availability_df,   "gold_device_availability",   prev_month_full_name)
-write_audit_record(gold_finance_weekly_df,         "gold_finance_weekly",         prev_month_full_name)
-write_audit_record(gold_weekly_admissions_df,      "gold_weekly_admissions",      prev_month_full_name)
-write_audit_record(gold_claim_status_summary_df,   "gold_claim_status_summary",   prev_month_full_name)
-write_audit_record(gold_rejected_claims_df,        "gold_rejected_claims",        prev_month_full_name)
-write_audit_record(gold_patient_status_df,         "gold_patient_status",         prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_medicine_availability", "gold", gold_medicine_availability_df.count(), "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_device_availability",   "gold", gold_device_availability_df.count(),   "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_finance_weekly",         "gold", gold_finance_weekly_df.count(),         "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_weekly_admissions",      "gold", gold_weekly_admissions_df.count(),      "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_claim_status_summary",   "gold", gold_claim_status_summary_df.count(),   "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_rejected_claims",        "gold", gold_rejected_claims_df.count(),        "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, "gold_patient_status",         "gold", gold_patient_status_df.count(),         "Success", prev_month_full_name)
 print("All audit records written successfully.")
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM J2D_Audit_table WHERE layer = 'gold' ORDER BY load_time DESC
+# MAGIC SELECT * FROM j2d_databricks_04.default.J2D_Audit_table WHERE layer = 'gold' ORDER BY load_time DESC
 
 # COMMAND ----------
 
