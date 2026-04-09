@@ -3,6 +3,10 @@
 
 # COMMAND ----------
 
+# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Create_Tables"
+
+# COMMAND ----------
+
 # -------------------------
 # CONFIGURATION
 # -------------------------
@@ -36,7 +40,11 @@ spark.conf.set(
 
 # COMMAND ----------
 
-
+dbutils.widgets.text("pipeline_name", "")
+dbutils.widgets.text("notebook_name", "")
+dbutils.widgets.text("run_id", "")
+dbutils.widgets.text("source", "")
+dbutils.widgets.text("input_date", "")
 
 
 pipeline_name = dbutils.widgets.get("pipeline_name")
@@ -499,7 +507,10 @@ display(spark.read.table("silver.fact_billing"))
 # COMMAND ----------
 
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
+from pyspark.sql.functions import lit, current_date
+from datetime import date
 
+# 1. Define the Schema
 audit_schema = StructType([
     StructField("pipeline_name", StringType(), True),
     StructField("notebook_name", StringType(), True),
@@ -512,14 +523,21 @@ audit_schema = StructType([
     StructField("report_month", StringType(), True)
 ])
 
-from pyspark.sql.functions import lit, current_date
-
+# 2. Define the ADLS-Safe Function
 def write_audit_record(df, layer, report_month):
     audit_df = spark.createDataFrame(
         [(pipeline_name, notebook_name, run_id, source, layer, df.count(), date.today(), "Success", report_month)],
         schema=audit_schema
     )
-    audit_df.write.mode("append").saveAsTable("J2D_Audit_table")
+    
+    # Hardcoded to rawlayer so ALL pipeline logs go to the same central folder
+    audit_path = "abfss://rawlayer@j2dstorage101.dfs.core.windows.net/Audit_Logs/j2d_audit_table"
+    
+    # Bypass DBFS and save directly to the Data Lake
+    audit_df.write \
+        .format("delta") \
+        .mode("append") \
+        .save(audit_path)
 
 # COMMAND ----------
 
@@ -531,7 +549,8 @@ write_audit_record(validated_pharmacy_df,   "silver", prev_month_full_name)
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select * from J2D_Audit_table where notebook_name='Silver_NB'
+# MAGIC SELECT * FROM delta.`abfss://rawlayer@j2dstorage101.dfs.core.windows.net/Audit_Logs/j2d_audit_table` 
+# MAGIC WHERE layer = 'silver'
 
 # COMMAND ----------
 
