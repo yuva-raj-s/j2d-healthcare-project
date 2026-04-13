@@ -1191,73 +1191,201 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
         <button class="ltab active" onclick="switchLearnTab(this,'p9')">Connect</button>
         <button class="ltab" onclick="switchLearnTab(this,'p9')">Page 1 & 2</button>
         <button class="ltab" onclick="switchLearnTab(this,'p9')">Page 3 & 4</button>
-        <button class="ltab" onclick="switchLearnTab(this,'p9')">✅ Checklist</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">&#9881;&#65039; Measures (DAX)</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">&#128640; Publish App</button>
+        <button class="ltab" onclick="switchLearnTab(this,'p9')">&#9989; Checklist</button>
       </div>
+      <!-- TAB 1: Connect -->
       <div class="ltab-content active ltab-pane">
-        <div class="callout why"><span class="callout-icon">💡</span><div><strong>DirectQuery</strong> means Power BI doesn't import a copy of the data — every visual sends a SQL query to Synapse when refreshed. This means your report always shows live data without scheduled refreshes. The trade-off: slightly slower than Import mode, but for healthcare data where you want yesterday's admissions this morning, DirectQuery is correct.</div></div>
+        <div class="callout why"><span class="callout-icon">&#128161;</span><div><strong>DirectQuery</strong> means Power BI doesn't import a copy of the data — every visual sends a SQL query to Synapse when refreshed. This means your report always shows live data without scheduled refreshes. The trade-off: slightly slower than Import mode, but for healthcare data where you want yesterday's admissions this morning, DirectQuery is correct.</div></div>
         <div class="code-wrap"><pre><span class="cc"># Power BI Desktop → Get Data → Azure → Azure Synapse Analytics SQL</span>
 <span class="ck">Server  :</span> <span class="cs">j2d-synapse-101-ondemand.sql.azuresynapse.net</span>
 <span class="cc"># ⚠️ Use the ondemand (Serverless) endpoint, NOT the workspace endpoint</span>
 <span class="ck">Database:</span> <span class="cs">j2d_gold_db</span>
 <span class="ck">Mode    :</span> <span class="cs">DirectQuery</span>
 
-<span class="cc"># Select these 6 views:</span>
+<span class="cc"># Select all 6 views (tick all):</span>
 <span class="cs">gold.vw_Finance_Summary</span>
 <span class="cs">gold.vw_Weekly_Admissions</span>
 <span class="cs">gold.vw_Device_Utilization</span>
 <span class="cs">gold.vw_Medicine_Stock_Alert</span>
 <span class="cs">gold.vw_Claim_Status_Breakdown</span>
-<span class="cs">gold.vw_Rejected_Claims_Ranking</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="cs">gold.vw_Rejected_Claims_Ranking</span>
+
+<span class="cc"># → Click Load → All 6 views appear in Fields pane</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout note"><span class="callout-icon">&#8505;&#65039;</span>After loading, go to <strong>Model view</strong> and remove any auto-detected relationships between views that don't make sense. These views are independent aggregations.</div>
       </div>
+      <!-- TAB 2: Page 1 & 2 -->
       <div class="ltab-content ltab-pane">
-        <h3 class="sub-h">Page 1 — Hospital Overview</h3>
+        <h3 class="sub-h">&#128203; Page 1 — Hospital Overview</h3>
+        <p class="body-text">Add a new page → rename <strong>Hospital Overview</strong>. Layout: 3 normal Cards stacked on the left, Area Line Chart (top-right), Horizontal Bar Chart (bottom-right).</p>
         <table>
-          <tr><th>Visual</th><th>Fields</th><th>Measure</th></tr>
-          <tr><td>KPI Card</td><td>Total Admissions</td><td>DISTINCTCOUNT(admission_id)</td></tr>
-          <tr><td>KPI Card</td><td>Currently Admitted</td><td>COUNTROWS(FILTER(is_currently=true))</td></tr>
-          <tr><td>KPI Card</td><td>Discharged</td><td>Total – Currently Admitted</td></tr>
-          <tr><td>Line Chart</td><td>Weekly Trend</td><td>week_start_date × total_admissions</td></tr>
-          <tr><td>Stacked Bar</td><td>By Department</td><td>department × admission_count</td></tr>
+          <tr><th>Visual</th><th>Type</th><th>Fields / Axes</th><th>Values / Config</th></tr>
+          <tr><td>Card 1</td><td><strong>Normal Card</strong> (not KPI)</td><td>Field: <code>Total Admissions</code> measure</td><td>Label: "Total Admissions" · Value: <strong>953</strong> · No decimals</td></tr>
+          <tr><td>Card 2</td><td><strong>Normal Card</strong></td><td>Field: Discharged measure (Total Admissions minus Currently Admitted)</td><td>Label: "Discharged" · Value: <strong>907</strong></td></tr>
+          <tr><td>Card 3</td><td><strong>Normal Card</strong></td><td>Field: <code>Currently Admitted</code> measure</td><td>Label: "Currently Admitted" · Value: <strong>46</strong></td></tr>
+          <tr><td>Area Line Chart</td><td>Line Chart (area fill)</td><td>X-axis: <code>Day</code> (numeric from week_start_date) · Y-axis: <code>total_admissions</code> SUM</td><td>Title: "Sum of total_admissions by Day" · Data labels On · Values: 99→119→116→113→121→116→82→106→35→46</td></tr>
+          <tr><td>Horizontal Bar Chart</td><td>Clustered Bar (horizontal)</td><td>Y-axis: <code>month_name</code> · X-axis: <code>total_admissions</code> SUM</td><td>Title: "Sum of total_admissions by Month" · October (~100), November (~450), December (~450)</td></tr>
         </table>
-        <h3 class="sub-h">Page 2 — Finance & Claims</h3>
+        <div class="callout tip"><span class="callout-icon">&#127912;</span>Insert normal Card: Visualizations pane → Card icon. Drop measure into <em>Fields</em> well. Large number shows automatically. Rename the label under Format → Callout value → Display label.</div>
+        <div class="divider"></div>
+        <h3 class="sub-h">&#128176; Page 2 — Finance &amp; Claims</h3>
+        <p class="body-text">Add a new page → rename <strong>Finance &amp; Claims</strong>. Layout: 2×2 normal Cards (top-left), Table with CF (top-right), Clustered Bar (bottom-left), Donut (bottom-right).</p>
         <table>
-          <tr><th>Visual</th><th>Fields</th><th>Config</th></tr>
-          <tr><td>KPI Card</td><td>Revenue Leakage ₹</td><td>SUM(revenue_leakage)</td></tr>
-          <tr><td>KPI Card</td><td>Avg Approval %</td><td>AVERAGE(approval_percentage)</td></tr>
-          <tr><td>Clustered Bar</td><td>Leakage by Insurer</td><td>insurance_name × revenue_leakage</td></tr>
-          <tr><td>Table with CF</td><td>Weekly Claims</td><td>Conditional format approval_pct</td></tr>
-          <tr><td>Donut</td><td>Claim Status</td><td>Approved / Rejected / Pending split</td></tr>
+          <tr><th>Visual</th><th>Type</th><th>Fields / Axes</th><th>Values / Config</th></tr>
+          <tr><td>Card — Avg Approval %</td><td><strong>Normal Card</strong></td><td>Field: <code>Avg Approval %</code> measure</td><td>Label: "Avg Approval %" · Value: <strong>91.23</strong> · 2 decimal places</td></tr>
+          <tr><td>Card — Revenue Leakage</td><td><strong>Normal Card</strong></td><td>Field: <code>Revenue Leakage</code> measure</td><td>Label: "Revenue Leakage" · Value: <strong>1.59M</strong> · ₹ currency</td></tr>
+          <tr><td>Card — Total Billed</td><td><strong>Normal Card</strong></td><td>Field: <code>Total Billed</code> measure</td><td>Label: "Total Billed" · Value: <strong>18.85M</strong> · ₹ currency</td></tr>
+          <tr><td>Card — Total Approved</td><td><strong>Normal Card</strong></td><td>Field: <code>Total Approved</code> measure</td><td>Label: "Total Approved" · Value: <strong>17.26M</strong> · ₹ currency</td></tr>
+          <tr><td>Clustered Bar — by Insurer</td><td>Horizontal Bar</td><td>Y-axis: <code>insurance_name</code> · X-axis: <code>Revenue Leakage</code> measure · Tooltip: <code>Avg Approval %</code></td><td>Sort: descending · Top: Care Health → Tata AIG → HDFC ERGO → Aditya Birla → Bajaj Allianz …</td></tr>
+          <tr><td>Table — Weekly Claims</td><td>Table + Conditional Formatting</td><td>Cols: <code>total_billed</code>, <code>total_approved</code>, <code>report_month</code>, <code>week_number</code>, <code>approval_percentage</code> SUM, <code>revenue_leakage</code></td><td>CF on <code>approval_percentage</code>: &lt;70→Red #FF4444 · 70-90→Yellow #FFD700 · &gt;90→Green #00B050 · Grand total shows 18,845,967 billed</td></tr>
+          <tr><td>Donut — Claim Status</td><td>Donut Chart</td><td>Legend: <code>claim_status</code> from <code>vw_Claim_Status_Breakdown</code> · Values: <code>claim_count</code> SUM</td><td>APPROVED→Green · REJECTED→Dark blue · PENDING→Orange · Results: Approved 334 (35.05%), Pending 331 (34.73%), Rejected 288 (30.22%)</td></tr>
         </table>
+        <div class="callout note"><span class="callout-icon">&#8505;&#65039;</span>The table CF on <code>approval_percentage</code>: Format pane → Cell elements → Background color → On → Rules. Most rows (weeks 45–51) show green at 898–921%. The grand total shows sum 8,666.64 for approval_percentage.</div>
       </div>
+      <!-- TAB 3: Page 3 & 4 -->
       <div class="ltab-content ltab-pane">
-        <h3 class="sub-h">Page 3 — Device Utilization</h3>
+        <h3 class="sub-h">&#128187; Page 3 — Device Utilization</h3>
+        <p class="body-text">Add a new page → rename <strong>Device Utilization</strong>. The colour-coded Matrix is the dominant visual (make it large). Three supporting charts fill top-right and bottom.</p>
         <table>
-          <tr><th>Visual</th><th>Config</th></tr>
-          <tr><td>Matrix</td><td>Rows: hospital_id · Cols: device_type · Values: utilization_pct<br>Conditional format: Red >90% · Yellow 70–90% · Green &lt;70%</td></tr>
-          <tr><td>Bar Chart</td><td>device_type × available_units vs in-use units</td></tr>
-          <tr><td>Alert Table</td><td>Filter utilization_pct > 90 — overloaded devices</td></tr>
+          <tr><th>Visual</th><th>Type</th><th>Fields / CF / Config</th></tr>
+          <tr><td>Matrix (main — large)</td><td>Matrix</td><td>Rows: <code>hospital_id</code> · Cols: <code>device_type</code> (5 types: Dialysis Machine, ECG Machine, Infusion Pump, Patient Monitor, Ventilator) · Values: <code>utilization_pct</code> SUM · Row totals ON<br><strong>CF Background + Font color:</strong> &gt;90 → Red #FF4444 · 70–90 → Yellow #FFD700 · &lt;70 → Green #00B050<br>Row totals: H02=453, H07=393.7, H06=390.3, H01=387.9, H05=386.5 … Grand total: <strong>3,760.60</strong></td></tr>
+          <tr><td>Bar Chart — Overloaded (top-right)</td><td>Clustered Bar (vertical)</td><td>X-axis: <code>hospital_id</code> · Y-axis: <code>Overloaded Devices</code> measure<br>Title: "Overloaded Devices by hospital_id" · H02=3, H01=H05=2, H03/H06/H07/H10=1</td></tr>
+          <tr><td>Bar Chart — Units (bottom-left)</td><td>Clustered Bar (horizontal)</td><td>Y-axis: <code>device_type</code> · X-axis: <code>in_use_units</code> SUM + <code>available_units</code> SUM<br>Title: "Sum of in_use_units and Sum of available_units by device_type"<br>Legend: in_use=Red, available=Green · Infusion Pump highest in_use (~1200)</td></tr>
+          <tr><td>Bar Chart — Monthly (bottom-right)</td><td>Clustered Bar (vertical)</td><td>X-axis: <code>report_month</code> · Y-axis: <code>total_units</code> SUM + <code>utilization_pct</code> SUM<br>Title: "Sum of total_units and Sum of utilization_pct by report_month"<br>January shows ~3.7K for both series in two blue shades</td></tr>
         </table>
-        <h3 class="sub-h">Page 4 — Pharma Inventory</h3>
+        <div class="callout tip"><span class="callout-icon">&#128308;</span><strong>Key hotspots in matrix:</strong> H05 Dialysis=96.70% (red), H06 ECG=95.80% (red), H02 Ventilator=97.90% (red), H01 Infusion Pump=94.30% (red). These are your critically overloaded device-hospital pairs.</div>
+        <div class="divider"></div>
+        <h3 class="sub-h">&#128138; Page 4 — Pharma Inventory</h3>
+        <p class="body-text">Add a new page → rename <strong>Pharma Inventory</strong>. Layout: Scatter Chart (top-left), Stock Table (top-right), red Normal Card (bottom-left), Category Bar Chart (bottom-right).</p>
         <table>
-          <tr><th>Visual</th><th>Config</th></tr>
-          <tr><td>Bar Chart</td><td>medicine_category × total_available_stock</td></tr>
-          <tr><td>Table</td><td>hospital_id · medicine_name · stock · alert_level<br>CF: CRITICAL=Red · LOW=Yellow · ADEQUATE=Green</td></tr>
-          <tr><td>Card</td><td>COUNT where expiry_status = EXPIRED</td></tr>
-          <tr><td>Scatter</td><td>total_stock vs available_stock by medicine</td></tr>
+          <tr><th>Visual</th><th>Type</th><th>Fields / Config</th></tr>
+          <tr><td>Scatter Chart (top-left)</td><td>Scatter Chart</td><td>X-axis: <code>available_stock</code> SUM · Y-axis: <code>total_stock</code> (use <code>available_stock</code> for Y if no separate total_stock field) · Legend: <code>medicine_name</code> · Size: <code>available_stock</code><br>Outlier: Insulin (~1261 X, ~1500 Y) top-right of scatter</td></tr>
+          <tr><td>Normal Card (bottom-left)</td><td><strong>Normal Card</strong></td><td>Field: <code>Expired Medicines</code> measure · Label: "Expired Medicines" · Value: <strong>7</strong><br>Format: Card background → light red/pink (#FFE0E0) · Font→ Red colour · This makes it visually critical</td></tr>
+          <tr><td>Table — Stock Detail (top-right)</td><td>Table + CF</td><td>Cols: <code>hospital_id</code>, <code>medicine_name</code>, <code>available_stock</code> SUM, <code>stock_alert_level</code><br><strong>CF on <code>stock_alert_level</code> (text rules):</strong> "CRITICAL"→Red · "LOW"→Yellow · "ADEQUATE"→Green<br>Grand total: <strong>8,017</strong> · Sample: H01 Insulin=1261 ADEQUATE (green), H01 Paracetamol=34 CRITICAL (red)</td></tr>
+          <tr><td>Bar Chart — by Category (bottom)</td><td>Clustered Bar (horizontal)</td><td>Y-axis: <code>category</code> · X-axis: <code>available_stock</code> SUM · Sort: descending<br>Diabetes~2600, Antibiotic~2500, Cardiac~1000, Critical Care~800, Respiratory~500, Painkiller~300</td></tr>
+        </table>
+        <div class="callout warn"><span class="callout-icon">&#9888;&#65039;</span>The <code>stock_alert_level</code> CF uses <em>text-match rules</em>, not number ranges. In Format pane → Cell elements → Background color → Rules → set "If value is equal to 'CRITICAL'" (exact string match). Do the same for "LOW" and "ADEQUATE".</div>
+      </div>
+      <!-- TAB 4: Measures DAX -->
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">&#9881;&#65039; Create All DAX Measures — Do This FIRST Before Any Visual</h3>
+        <div class="callout note"><span class="callout-icon">&#8505;&#65039;</span>Right-click any view in Fields pane → <strong>New Measure</strong>. You are using <strong>normal Card visuals</strong> (not KPI cards). Drop the measure into the Card's Fields well. Large number is displayed automatically.</div>
+        <div class="code-wrap"><pre><span class="cc">-- ① From vw_Weekly_Admissions (Hospital Overview)</span>
+<span class="ck">Total Admissions</span> = <span class="cm">SUM</span>(vw_Weekly_Admissions[total_admissions])
+<span class="cc">-- Result: 953</span>
+
+<span class="ck">Currently Admitted</span> =
+<span class="cm">CALCULATE</span>(
+    <span class="cm">SUM</span>(vw_Weekly_Admissions[total_admissions]),
+    <span class="cm">LASTDATE</span>(vw_Weekly_Admissions[week_start_date])
+)
+<span class="cc">-- Result: 46 (most recent week value)</span>
+
+<span class="cc">-- ② From vw_Finance_Summary (Finance & Claims)</span>
+<span class="ck">Total Billed</span>    = <span class="cm">SUM</span>(vw_Finance_Summary[total_billed])
+<span class="ck">Total Approved</span>  = <span class="cm">SUM</span>(vw_Finance_Summary[total_approved])
+<span class="ck">Revenue Leakage</span> = <span class="cm">SUM</span>(vw_Finance_Summary[revenue_leakage])
+<span class="ck">Avg Approval %</span>  = <span class="cm">AVERAGE</span>(vw_Finance_Summary[approval_percentage])
+
+<span class="cc">-- ③ From vw_Device_Utilization (Device Utilization)</span>
+<span class="ck">Overloaded Devices</span> =
+<span class="cm">CALCULATE</span>(
+    <span class="cm">COUNTROWS</span>(vw_Device_Utilization),
+    vw_Device_Utilization[utilization_pct] > <span class="cs">90</span>
+)
+
+<span class="cc">-- ④ From vw_Medicine_Stock_Alert (Pharma Inventory)</span>
+<span class="ck">Expired Medicines</span> =
+<span class="cm">CALCULATE</span>(
+    <span class="cm">COUNTROWS</span>(vw_Medicine_Stock_Alert),
+    vw_Medicine_Stock_Alert[stock_alert_level] = <span class="cs">"CRITICAL"</span>
+)
+<span class="cc">-- Result: 7 (shown in red Card on Pharma Inventory page)</span>
+
+<span class="cc">-- ⑤ From vw_Claim_Status_Breakdown (Finance page donut)</span>
+<span class="ck">Rejected Claims</span> =
+<span class="cm">CALCULATE</span>(
+    <span class="cm">SUM</span>(vw_Claim_Status_Breakdown[claim_count]),
+    vw_Claim_Status_Breakdown[claim_status] = <span class="cs">"Rejected"</span>
+)</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">&#127183; Normal Card vs KPI Card (you are using Normal Card)</h3>
+        <table>
+          <tr><th></th><th>Normal Card (Card new) ✅ Used here</th><th>KPI Card ❌ Not used</th></tr>
+          <tr><td>Insert via</td><td>Visualizations → Card icon</td><td>Visualizations → KPI icon</td></tr>
+          <tr><td>Fields required</td><td>One field/measure in Fields well</td><td>Value + Trend axis + Target goal</td></tr>
+          <tr><td>Display</td><td>Large number + label below</td><td>Number + direction arrow + % vs target</td></tr>
+          <tr><td>Example output</td><td>953 · Total Admissions</td><td>953 vs 1000 target → ▼7% below target</td></tr>
+        </table>
+        <h3 class="sub-h">&#127912; Conditional Formatting Quick Reference</h3>
+        <table>
+          <tr><th>Page</th><th>Visual</th><th>Column</th><th>Rules (Format pane → Cell elements → Background color → Rules)</th></tr>
+          <tr><td>Finance &amp; Claims</td><td>Table</td><td><code>approval_percentage</code></td><td>Value &lt;70 → Red #FF4444 · 70 to 90 → Yellow #FFD700 · &gt;90 → Green #00B050</td></tr>
+          <tr><td>Device Utilization</td><td>Matrix</td><td><code>utilization_pct</code></td><td>Value &gt;90 → Red · 70–90 → Yellow · &lt;70 → Green (apply to Background AND Font color for contrast)</td></tr>
+          <tr><td>Pharma Inventory</td><td>Table</td><td><code>stock_alert_level</code></td><td>Equal to "CRITICAL" → Red · Equal to "LOW" → Yellow · Equal to "ADEQUATE" → Green (text field rules, not number ranges)</td></tr>
         </table>
       </div>
+      <!-- TAB 5: Publish App -->
+      <div class="ltab-content ltab-pane">
+        <h3 class="sub-h">&#128640; Step 1 — Publish from Power BI Desktop</h3>
+        <div class="code-wrap"><pre><span class="cc"># Power BI Desktop → Home tab → Publish</span>
+<span class="ck">Select workspace:</span> <span class="cs">J2D Healthcare</span>
+<span class="cc"># Create workspace if it doesn't exist</span>
+<span class="cc"># Wait for "Publishing to Power BI succeeded" ✓</span>
+<span class="cc"># Click the link to open in browser and verify all 4 pages load data</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">&#128230; Step 2 — Create the Power BI App</h3>
+        <div class="code-wrap"><pre><span class="cc"># Browser → app.powerbi.com → Your workspace "J2D Healthcare"</span>
+<span class="cc"># → Click "Create app" (top-right of workspace page)</span>
+
+<span class="ck">Setup tab:</span>
+  <span class="ck">App name   :</span> <span class="cs">J2D Healthcare Analytics</span>
+  <span class="ck">Description:</span> <span class="cs">End-to-end healthcare data pipeline dashboard</span>
+  <span class="ck">App logo   :</span> <span class="cs">upload a healthcare or medical icon (PNG)</span>
+
+<span class="ck">Navigation tab → Add all 4 report pages:</span>
+  <span class="cs">+ Hospital Overview</span>
+  <span class="cs">+ Finance &amp; Claims</span>
+  <span class="cs">+ Device Utilization</span>
+  <span class="cs">+ Pharma Inventory</span>
+  <span class="cc"># You can rename and reorder pages here</span>
+
+<span class="ck">Permissions tab:</span>
+  <span class="cs">Entire organization</span>    <span class="cc"># if using org Microsoft account</span>
+  <span class="cc"># OR: specific emails   (enter emails for team/portfolio sharing)</span>
+  <span class="cc"># OR: Anyone            (for public portfolio link)</span>
+
+<span class="cc"># → Click "Publish app" → App is live!</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">&#128279; Step 3 — Get the Shareable Link</h3>
+        <div class="code-wrap"><pre><span class="cc"># Workspace → Apps tab → your app → "..." → "Get app link"</span>
+<span class="cc"># Copy the link (format):</span>
+<span class="cs">https://app.powerbi.com/apps/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>
+
+<span class="cc"># Add to your portfolio:</span>
+<span class="cs">→ GitHub README  — "📊 Live Dashboard" section</span>
+<span class="cs">→ LinkedIn post  — post screenshot + link</span>
+<span class="cs">→ Resume         — Projects section as clickable link</span>
+
+<span class="cc"># To update app after report changes:</span>
+<span class="cc"># Desktop → edit → Home → Publish (overwrites existing report)</span>
+<span class="cc"># app.powerbi.com → Workspace → "Update app" → Publish app</span>
+<span class="cc"># All viewers see updated version automatically</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout industry"><span class="callout-icon">&#127962;&#65039;</span><strong>Portfolio tip:</strong> Add the app link directly to your GitHub README. Recruiters can click through all 4 pages interactively without Power BI Desktop installed. This is one of the strongest portfolio differentiators for a data engineering role.</div>
+      </div>
+      <!-- TAB 6: Checklist -->
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Power BI connected to Synapse Serverless endpoint (DirectQuery)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>6 gold views loaded and showing data</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 1 – Hospital Overview built (3 KPIs, line, bar)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 2 – Finance & Claims built (2 KPIs, bar, table, donut)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 3 – Device Utilization built (matrix with CF, bar, alert table)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 4 – Pharma Inventory built (bar, table with CF, card, scatter)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Healthcare colour theme applied, saved as J2D_Healthcare_Dashboard.pbix</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Power BI Desktop connected to Synapse Serverless endpoint in DirectQuery mode (j2d-synapse-101-ondemand.sql.azuresynapse.net)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 6 gold views loaded and showing data in Fields pane</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All DAX measures created: Total Admissions · Currently Admitted · Total Billed · Total Approved · Revenue Leakage · Avg Approval % · Overloaded Devices · Expired Medicines · Rejected Claims</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 1 – Hospital Overview: 3 normal Cards (953 / 907 / 46) + area line chart by Day (peaks 99→121) + horizontal bar chart by Month (Oct/Nov/Dec)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 2 – Finance &amp; Claims: 4 normal Cards (91.23 / 1.59M / 18.85M / 17.26M) + clustered bar by insurance_name + table CF on approval_percentage (Green/Yellow/Red) + donut (Approved 35% / Rejected 30% / Pending 34%)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 3 – Device Utilization: large matrix heat-map Red/Yellow/Green CF (grand total 3,760.60) + overloaded count bar chart + in_use vs available horizontal bar + total_units by month bar</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Page 4 – Pharma Inventory: scatter plot by medicine name + normal Card (7 Expired Medicines, red background) + table CF on stock_alert_level + bar chart by category (Diabetes largest ~2600)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Report saved as J2D_Healthcare_Dashboard.pbix</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Report published to Power BI Service workspace "J2D Healthcare"</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>App "J2D Healthcare Analytics" created with all 4 pages, shareable link obtained and added to GitHub README/LinkedIn</li>
         </ul>
-      </div>
-      <button class="done-btn" onclick="markPhaseDone('p9')">✓ Phase 9 Complete</button>
+      </div>      <button class="done-btn" onclick="markPhaseDone('p9')">✓ Phase 9 Complete</button>
     </div>
   </div>
   </div>
