@@ -1,12 +1,9 @@
 {
     "definition": {
-        "metadata": {
-            "notes": {}
-        },
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "contentVersion": "1.0.0.0",
         "triggers": {
-            "When_HTTP_Request_Received": {
+            "When_an_HTTP_request_is_received": {
                 "type": "Request",
                 "kind": "Http",
                 "inputs": {
@@ -68,6 +65,45 @@
                 },
                 "runAfter": {}
             },
+            "Send_Email_Notification": {
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['gmail']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "body": {
+                        "To": "yuvaraj.reachout@gmail.com",
+                        "Subject": "@concat(variables('statusIcon'), ' J2D Healthcare | ', body('Parse_Request_Body')?['stage'], ' | ', body('Parse_Request_Body')?['status'], ' | ', body('Parse_Request_Body')?['input_date'])\n",
+                        "Body": "\n\n<div style=\"max-width: 640px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);\">\n\n  \n  <div style=\"background-color: @{variables('statusColor')}; padding: 24px 32px;\">\n    <h1 style=\"margin: 0; color: #ffffff; font-size: 20px; font-weight: 600;\">\n      @{variables('statusIcon')} &nbsp; Pipeline @{body('Parse_Request_Body')?['status']}\n    </h1>\n    <p style=\"margin: 6px 0 0; color: rgba(255,255,255,0.85); font-size: 13px;\">\n      Stage: <strong>@{body('Parse_Request_Body')?['stage']}</strong>\n    </p>\n  </div>\n\n  \n  <div style=\"padding: 28px 32px;\">\n    <table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">\n      <tbody><tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d; width: 38%;\">Pipeline Name</td>\n        <td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">\n          @{body('Parse_Request_Body')?['pipelineName']}\n        </td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d;\">Stage</td>\n        <td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">\n          @{body('Parse_Request_Body')?['stage']}\n        </td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d;\">Status</td>\n        <td style=\"padding: 10px 0;\">\n          <span style=\"background-color: @{variables('statusColor')}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;\">\n            @{body('Parse_Request_Body')?['status']}\n          </span>\n        </td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d;\">Input Date</td>\n        <td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">\n          @{body('Parse_Request_Body')?['input_date']}\n        </td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d;\">Run ID</td>\n        <td style=\"padding: 10px 0; color: #2c3e50; font-family: monospace; font-size: 12px;\">\n          @{body('Parse_Request_Body')?['runId']}\n        </td>\n      </tr>\n      <tr style=\"border-bottom: 1px solid #ecf0f1;\">\n        <td style=\"padding: 10px 0; color: #7f8c8d;\">Triggered At</td>\n        <td style=\"padding: 10px 0; color: #2c3e50;\">@{utcNow()}</td>\n      </tr>\n    </tbody></table>\n\n    \n    <div style=\"margin-top: 20px; padding: 16px; background-color: #f8f9fa; border-left: 4px solid @{variables('statusColor')}; border-radius: 4px;\">\n      <p style=\"margin: 0; color: #2c3e50; font-size: 14px; line-height: 1.6;\">\n        <strong>Details:</strong><br>\n        @{body('Parse_Request_Body')?['message']}\n      </p>\n    </div>\n\n    \n    <div style=\"margin-top: 24px; text-align: center;\">\n      <a href=\"https://adf.azure.com/en/monitoring/pipelineruns\" style=\"background-color: #2980b9; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;\">\n        View in ADF Monitor →\n      </a>\n    </div>\n  </div>\n\n  \n  <div style=\"background-color: #f4f6f9; padding: 16px 32px; text-align: center;\">\n    <p style=\"margin: 0; color: #bdc3c7; font-size: 12px;\">\n      J2D Healthcare Data Platform · Azure Data Factory · Automated Alert\n    </p>\n  </div>\n\n</div>\n\n"
+                    },
+                    "path": "/v2/Mail"
+                },
+                "runAfter": {
+                    "Set_StatusIcon": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Return_HTTP_200": {
+                "type": "Response",
+                "kind": "Http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": {
+                        "result": "Notification processed",
+                        "status": "@{body('Parse_Request_Body')?['status']}",
+                        "stage": "@{body('Parse_Request_Body')?['stage']}"
+                    }
+                },
+                "runAfter": {
+                    "Send_Email_Notification": [
+                        "Succeeded"
+                    ]
+                }
+            },
             "Set_StatusIcon": {
                 "type": "InitializeVariable",
                 "inputs": {
@@ -89,46 +125,6 @@
                         "Succeeded"
                     ]
                 }
-            },
-            "Send_Email_Notification": {
-                "type": "ApiConnection",
-                "inputs": {
-                    "host": {
-                        "connection": {
-                            "name": "@parameters('$connections')['gmail']['connectionId']"
-                        }
-                    },
-                    "method": "post",
-                    "body": {
-                        "To": "avinashanu101@gmail.com",
-                        "IsHtml": true,
-                        "Subject": "@{variables('statusIcon')} J2D Healthcare | @{body('Parse_Request_Body')?['stage']} | @{body('Parse_Request_Body')?['status']} | @{body('Parse_Request_Body')?['input_date']}",
-                        "Body": "<html><body style=\"font-family: Segoe UI, Arial, sans-serif; background-color: #f4f6f9; padding: 20px;\"><div style=\"max-width: 640px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);\"><div style=\"background-color: @{variables('statusColor')}; padding: 24px 32px;\"><h1 style=\"margin: 0; color: #ffffff; font-size: 20px; font-weight: 600;\">@{variables('statusIcon')} &nbsp; Pipeline @{body('Parse_Request_Body')?['status']}</h1><p style=\"margin: 6px 0 0; color: rgba(255,255,255,0.85); font-size: 13px;\">Stage: <strong>@{body('Parse_Request_Body')?['stage']}</strong></p></div><div style=\"padding: 28px 32px;\"><table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\"><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d; width: 38%;\">Pipeline Name</td><td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">@{body('Parse_Request_Body')?['pipelineName']}</td></tr><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d;\">Stage</td><td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">@{body('Parse_Request_Body')?['stage']}</td></tr><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d;\">Status</td><td style=\"padding: 10px 0;\"><span style=\"background-color: @{variables('statusColor')}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;\">@{body('Parse_Request_Body')?['status']}</span></td></tr><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d;\">Input Date</td><td style=\"padding: 10px 0; color: #2c3e50; font-weight: 500;\">@{body('Parse_Request_Body')?['input_date']}</td></tr><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d;\">Run ID</td><td style=\"padding: 10px 0; color: #2c3e50; font-family: monospace; font-size: 12px;\">@{body('Parse_Request_Body')?['runId']}</td></tr><tr style=\"border-bottom: 1px solid #ecf0f1;\"><td style=\"padding: 10px 0; color: #7f8c8d;\">Triggered At</td><td style=\"padding: 10px 0; color: #2c3e50;\">@{utcNow()}</td></tr></table><div style=\"margin-top: 20px; padding: 16px; background-color: #f8f9fa; border-left: 4px solid @{variables('statusColor')}; border-radius: 4px;\"><p style=\"margin: 0; color: #2c3e50; font-size: 14px; line-height: 1.6;\"><strong>Details:</strong><br/>@{body('Parse_Request_Body')?['message']}</p></div><div style=\"margin-top: 24px; text-align: center;\"><a href=\"https://adf.azure.com/en/monitoring/pipelineruns\" style=\"background-color: #2980b9; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;\">View in ADF Monitor →</a></div></div><div style=\"background-color: #f4f6f9; padding: 16px 32px; text-align: center;\"><p style=\"margin: 0; color: #bdc3c7; font-size: 12px;\">J2D Healthcare Data Platform · Azure Data Factory · Automated Alert</p></div></div></body></html>"
-                    },
-                    "path": "/Mail"
-                },
-                "runAfter": {
-                    "Set_StatusIcon": [
-                        "Succeeded"
-                    ]
-                }
-            },
-            "Return_HTTP_200": {
-                "type": "Response",
-                "inputs": {
-                    "statusCode": 200,
-                    "body": {
-                        "result": "Notification processed",
-                        "status": "@{body('Parse_Request_Body')?['status']}",
-                        "stage": "@{body('Parse_Request_Body')?['stage']}"
-                    }
-                },
-                "runAfter": {
-                    "Send_Email_Notification": [
-                        "Succeeded",
-                        "Failed"
-                    ]
-                }
             }
         },
         "outputs": {},
@@ -144,8 +140,8 @@
             "type": "Object",
             "value": {
                 "gmail": {
-                    "id": "/subscriptions/61ca8b3b-db69-42a0-8ec3-152cfa7c654d/providers/Microsoft.Web/locations/eastus/managedApis/gmail",
-                    "connectionId": "/subscriptions/61ca8b3b-db69-42a0-8ec3-152cfa7c654d/resourceGroups/rg-j2d-healthcare/providers/Microsoft.Web/connections/gmail",
+                    "id": "/subscriptions/ba12fd29-159e-4259-9a7b-3150ba0bc214/providers/Microsoft.Web/locations/centralindia/managedApis/gmail",
+                    "connectionId": "/subscriptions/ba12fd29-159e-4259-9a7b-3150ba0bc214/resourceGroups/rg-j2d-healthcare/providers/Microsoft.Web/connections/gmail",
                     "connectionName": "gmail",
                     "connectionProperties": {}
                 }
