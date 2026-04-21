@@ -8,35 +8,10 @@
 # COMMAND ----------
 
 # -------------------------
-# CONFIGURATION
+# NOTEBOOK-SPECIFIC CONFIG
+# (secrets, ADLS conf, CATALOG, AUDIT_TABLE from Helper_NB)
 # -------------------------
-
-# Retrieve secrets from Key Vault
-import os
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
-
-KVUri = "https://j2d-keyvault101.vault.azure.net/"
-credential = DefaultAzureCredential()
-client = SecretClient(vault_url=KVUri, credential=credential)
-
-mysql_password = client.get_secret("mysql-password").value
-azuresql_password = client.get_secret("azuresql-password").value
-postgresql_password = client.get_secret("postgresql-password").value
-adls_account_key = client.get_secret("adls-account-key").value
-synapse_password = client.get_secret("synapse-password").value
-
-# Replace with your values
-storage_account_name = "j2dstorage101"
 container_name = "bronzelayer"
-
-# -------------------------
-# SETUP CONFIGURATION
-# -------------------------
-spark.conf.set(
-  f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-  adls_account_key
-)
 
 # COMMAND ----------
 
@@ -226,15 +201,15 @@ display(dim_medicine_df)
 
 # COMMAND ----------
 
-# Delete and insert using Spark SQL
-spark.sql("DELETE FROM silver.dim_medicine")
+# Delete and insert using Spark SQL (Unity Catalog 3-part namespace)
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_medicine")
 dim_medicine_df.createOrReplaceTempView("tmp_dim_medicine")
-spark.sql("""
-INSERT INTO silver.dim_medicine
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_medicine
 SELECT * FROM tmp_dim_medicine
 """)
 
-display(spark.read.table("silver.dim_medicine"))
+display(spark.read.table(f"{CATALOG}.silver.dim_medicine"))
 
 # COMMAND ----------
 
@@ -261,18 +236,18 @@ fact_medicine_inventory_df = (
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.fact_medicine_inventory")
+spark.sql(f"DELETE FROM {CATALOG}.silver.fact_medicine_inventory")
 
 # Register DataFrame as temp view for insert
 fact_medicine_inventory_df.createOrReplaceTempView("tmp_fact_medicine_inventory")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.fact_medicine_inventory
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.fact_medicine_inventory
 SELECT * FROM tmp_fact_medicine_inventory
 """)
 
-display(spark.read.table("silver.fact_medicine_inventory"))
+display(spark.read.table(f"{CATALOG}.silver.fact_medicine_inventory"))
 
 # COMMAND ----------
 
@@ -287,18 +262,18 @@ dim_device_df = (
 
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.dim_device")
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_device")
 
 # Register DataFrame as temp view for insert
 dim_device_df.createOrReplaceTempView("tmp_dim_device")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.dim_device
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_device
 SELECT * FROM tmp_dim_device
 """)
 
-display(spark.read.table("silver.dim_device"))
+display(spark.read.table(f"{CATALOG}.silver.dim_device"))
 
 # COMMAND ----------
 
@@ -320,18 +295,18 @@ fact_device_usage_df = (
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.fact_device_usage")
+spark.sql(f"DELETE FROM {CATALOG}.silver.fact_device_usage")
 
 # Register DataFrame as temp view for insert
 fact_device_usage_df.createOrReplaceTempView("tmp_fact_device_usage")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.fact_device_usage
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.fact_device_usage
 SELECT * FROM tmp_fact_device_usage
 """)
 
-display(spark.read.table("silver.fact_device_usage"))
+display(spark.read.table(f"{CATALOG}.silver.fact_device_usage"))
 
 # COMMAND ----------
 
@@ -345,18 +320,18 @@ display(dim_insurance_df)
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.dim_insurance")
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_insurance")
 
 # Register DataFrame as temp view for insert
 dim_insurance_df.createOrReplaceTempView("tmp_dim_insurance")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.dim_insurance
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_insurance
 SELECT * FROM tmp_dim_insurance
 """)
 
-display(spark.read.table("silver.dim_insurance"))
+display(spark.read.table(f"{CATALOG}.silver.dim_insurance"))
 
 # COMMAND ----------
 
@@ -370,18 +345,18 @@ display(dim_patient_df)
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.dim_patient")
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_patient")
 
 # Register DataFrame as temp view for insert
 dim_patient_df.createOrReplaceTempView("tmp_dim_patient")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.dim_patient
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_patient
 SELECT * FROM tmp_dim_patient
 """)
 
-display(spark.read.table("silver.dim_patient"))
+display(spark.read.table(f"{CATALOG}.silver.dim_patient"))
 
 # COMMAND ----------
 
@@ -395,18 +370,18 @@ display(dim_doctor_df)
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.dim_doctor")
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_doctor")
 
 # Register DataFrame as temp view for insert
 dim_doctor_df.createOrReplaceTempView("tmp_dim_doctor")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.dim_doctor
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_doctor
 SELECT * FROM tmp_dim_doctor
 """)
 
-display(spark.read.table("silver.dim_doctor"))
+display(spark.read.table(f"{CATALOG}.silver.dim_doctor"))
 
 # COMMAND ----------
 
@@ -420,18 +395,18 @@ display(dim_bed_df)
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.dim_bed")
+spark.sql(f"DELETE FROM {CATALOG}.silver.dim_bed")
 
 # Register DataFrame as temp view for insert
 dim_bed_df.createOrReplaceTempView("tmp_dim_bed")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.dim_bed
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.dim_bed
 SELECT * FROM tmp_dim_bed
 """)
 
-display(spark.read.table("silver.dim_bed"))
+display(spark.read.table(f"{CATALOG}.silver.dim_bed"))
 
 # COMMAND ----------
 
@@ -459,14 +434,14 @@ display(fact_admission_df)
 # COMMAND ----------
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.fact_admission")
+spark.sql(f"DELETE FROM {CATALOG}.silver.fact_admission")
 
 # Register DataFrame as temp view for insert
 fact_admission_df.createOrReplaceTempView("tmp_fact_admission")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.fact_admission
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.fact_admission
 SELECT * FROM tmp_fact_admission
 """)
 
@@ -491,65 +466,31 @@ display(fact_billing_df)
 
 
 # Delete all records from the table
-spark.sql("DELETE FROM silver.fact_billing")
+spark.sql(f"DELETE FROM {CATALOG}.silver.fact_billing")
 
 # Register DataFrame as temp view for insert
 fact_billing_df.createOrReplaceTempView("tmp_fact_billing")
 
 # Insert data into the table
-spark.sql("""
-INSERT INTO silver.fact_billing
+spark.sql(f"""
+INSERT INTO {CATALOG}.silver.fact_billing
 SELECT * FROM tmp_fact_billing
 """)
 
-display(spark.read.table("silver.fact_billing"))
+display(spark.read.table(f"{CATALOG}.silver.fact_billing"))
 
 # COMMAND ----------
 
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType
-from pyspark.sql.functions import lit, current_date
-from datetime import date
 
-# 1. Define the Schema
-audit_schema = StructType([
-    StructField("pipeline_name", StringType(), True),
-    StructField("notebook_name", StringType(), True),
-    StructField("run_id", StringType(), True),
-    StructField("source", StringType(), True),
-    StructField("layer", StringType(), True),
-    StructField("record_count", IntegerType(), True),
-    StructField("load_time", DateType(), True),
-    StructField("status", StringType(), True),
-    StructField("report_month", StringType(), True)
-])
-
-# 2. Define the ADLS-Safe Function
-def write_audit_record(df, layer, report_month):
-    audit_df = spark.createDataFrame(
-        [(pipeline_name, notebook_name, run_id, source, layer, df.count(), date.today(), "Success", report_month)],
-        schema=audit_schema
-    )
-    
-    # Hardcoded to rawlayer so ALL pipeline logs go to the same central folder
-    audit_path = "abfss://rawlayer@j2dstorage101.dfs.core.windows.net/Audit_Logs/j2d_audit_table"
-    
-    # Bypass DBFS and save directly to the Data Lake
-    audit_df.write \
-        .format("delta") \
-        .mode("append") \
-        .save(audit_path)
-
-# COMMAND ----------
-
-from datetime import date
-write_audit_record(silver_clean_hospital_df, "silver", prev_month_full_name)
-write_audit_record(device_df,               "silver", prev_month_full_name)
-write_audit_record(validated_pharmacy_df,   "silver", prev_month_full_name)
+# Audit writes — delegated to write_audit_record() from Helper_NB
+write_audit_record(pipeline_name, notebook_name, run_id, source, "silver", silver_clean_hospital_df.count(), "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, source, "silver", device_df.count(),               "Success", prev_month_full_name)
+write_audit_record(pipeline_name, notebook_name, run_id, source, "silver", validated_pharmacy_df.count(),   "Success", prev_month_full_name)
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM delta.`abfss://rawlayer@j2dstorage101.dfs.core.windows.net/Audit_Logs/j2d_audit_table` 
+# MAGIC SELECT * FROM j2d_databricks_04.default.J2D_Audit_table
 # MAGIC WHERE layer = 'silver'
 
 # COMMAND ----------

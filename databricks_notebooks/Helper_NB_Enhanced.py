@@ -51,6 +51,11 @@ def validate_col_greater_equal(df, col1, col2):
 # -------------------------------------------------------------------------
 # 2. Audit Table Schema & Standardized Writing Function
 # -------------------------------------------------------------------------
+
+# Unity Catalog identifier
+CATALOG = "j2d_databricks_04"
+AUDIT_TABLE = f"{CATALOG}.default.J2D_Audit_table"
+
 audit_schema = StructType([
     StructField("pipeline_name", StringType(), True),
     StructField("notebook_name", StringType(), True),
@@ -68,8 +73,8 @@ def write_audit_record(pipeline_name, notebook_name, run_id, source, layer, coun
         [(pipeline_name, notebook_name, run_id, source, layer, count, date.today(), status, report_month)],
         schema=audit_schema
     )
-    # Using mergeSchema incase a new column like error_message gets added downstream
-    audit_df.write.mode("append").option("mergeSchema", "true").saveAsTable("J2D_Audit_table")
+    # Using mergeSchema in case a new column like error_message gets added downstream
+    audit_df.write.mode("append").option("mergeSchema", "true").saveAsTable(AUDIT_TABLE)
 
 
 # -------------------------------------------------------------------------

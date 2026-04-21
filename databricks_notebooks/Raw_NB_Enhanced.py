@@ -1,46 +1,10 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB_Enhanced"
+# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
 
 # COMMAND ----------
 
-# -------------------------
-# CONFIGURATION
-# -------------------------
-
-# Retrieve secrets from Key Vault
-import os
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
-
-KVUri = "https://j2d-keyvault101.vault.azure.net/"
-credential = DefaultAzureCredential()
-client = SecretClient(vault_url=KVUri, credential=credential)
-
-mysql_password = client.get_secret("mysql-password").value
-azuresql_password = client.get_secret("azuresql-password").value
-postgresql_password = client.get_secret("postgresql-password").value
-adls_account_key = client.get_secret("adls-account-key").value
-
-# Storage Names (could technically be parameterized via widgets ideally, but standard here)
-storage_account_name = "j2dstorage101"
-
-# COMMAND ----------
-
-# Widget Definitions
-
-pipeline_name = dbutils.widgets.get("pipeline_name")
-notebook_name = dbutils.widgets.get("notebook_name")
-run_id = dbutils.widgets.get("run_id")
-source = dbutils.widgets.get("source")
-report_month = dbutils.widgets.get("report_month")
-raw_container = dbutils.widgets.get("raw_container")
-bronze_container = dbutils.widgets.get("bronze_container")
-
-# Setup Key
-spark.conf.set(
-  f"fs.azure.account.key.{storage_account_name}.dfs.core.windows.net",
-  adls_account_key
-)
+# NOTEBOOK-SPECIFIC CONFIG
+# (secrets, ADLS conf, CATALOG, AUDIT_TABLE provided by Helper_NB)
 
 # COMMAND ----------
 
