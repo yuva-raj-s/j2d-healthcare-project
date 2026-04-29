@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
+# MAGIC %run "/Workspace/Users/vinaymk469@gmail.com/Helper_NB"
 
 # COMMAND ----------
 
@@ -325,7 +325,7 @@ write_audit_record(pipeline_name, notebook_name, run_id, source, "raw", pharmacy
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select * from j2d_databricks_04.default.J2D_Audit_table where notebook_name='raw_nb'
+# MAGIC select * from j2d_databricks_7405614587903999.default.J2D_Audit_table where notebook_name='raw_nb'
 
 # COMMAND ----------
 

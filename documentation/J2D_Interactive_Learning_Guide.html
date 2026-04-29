@@ -460,7 +460,7 @@ ul.body-list li{margin-bottom:4px}
 
   <div class="hero-band">
     <div class="hero-inner">
-      <div class="hero-pill"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite"></span>Azure Data Engineering</div>
+      <div class="hero-pill"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite"></span>Azure Data Engineering · Unity Catalog</div>
       <div class="hero-title">J2D Healthcare<br><em>End-to-End Data Pipeline</em></div>
       <div class="hero-sub">A complete industry-standard healthcare data pipeline built on Microsoft Azure — from raw hospital records in 3 different databases all the way to live Power BI dashboards. Designed to be Azure Free Trial compatible (~$35–43/month).</div>
       <div class="pipe-flow">
@@ -517,8 +517,8 @@ ul.body-list li{margin-bottom:4px}
       <div class="concept-card-head"><div class="concept-icon">⚡</div><div><div class="concept-title">Azure Databricks (PySpark)</div><div class="concept-sub">Distributed data transformation engine</div></div></div>
       <div class="concept-body">
         <div class="concept-why"><span class="label-why">Why</span><br>Transforming 1,000+ healthcare records requires joins across 3 source systems, schema validation, deduplication, and aggregation. PySpark can handle this at any scale, and Delta tables give ACID guarantees — crucial for healthcare data accuracy.</div>
-        <div class="concept-what"><span class="label-what">What</span><br>4 Python notebooks: <code>Helper_NB</code> (utilities), <code>Raw_NB</code> (validate → bronze), <code>Silver_NB</code> (model into 10 tables), <code>Gold_NB</code> (aggregate into 7 outputs).</div>
-        <div class="concept-how"><span class="label-how">How it fits</span><br>Each notebook is triggered by ADF in sequence. They all write audit records to <code>J2D_Audit_table</code> so every run is traceable.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>5 Python notebooks: <code>Helper_NB</code> (shared bootstrap — KV secrets, ADLS config, Unity Catalog), <code>Create_Tables</code> (Silver schema bootstrap — run once), <code>Raw_NB</code> (validate → bronze), <code>Silver_NB</code> (model into 10 UC Delta tables), <code>Gold_NB</code> (aggregate into 7 Gold Parquet outputs).</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br>Each pipeline notebook starts with <code>%run Helper_NB</code> — no repeated pip installs or credential lookups. Helper_NB sets the Unity Catalog context (<code>j2d_databricks_7405614587903999</code>) and all notebooks write audit records to <code>j2d_databricks_7405614587903999.default.J2D_Audit_table</code>.</div>
       </div>
     </div>
     <div class="concept-card" onclick="toggleConcept(this)">
@@ -535,6 +535,14 @@ ul.body-list li{margin-bottom:4px}
         <div class="concept-why"><span class="label-why">Why</span><br>The whole point of the pipeline is actionable insights. Hospital administrators need to see: which departments are overwhelmed, which insurers reject the most claims, which medicines are near expiry. Power BI translates raw aggregations into visual decisions.</div>
         <div class="concept-what"><span class="label-what">What</span><br>4-page dashboard — Hospital Overview, Finance & Claims, Device Utilization, Pharma Inventory — with 20+ visuals in DirectQuery mode (always live).</div>
         <div class="concept-how"><span class="label-how">How it fits</span><br>Connects to Synapse Serverless SQL endpoint → loads 6 views → visuals refresh automatically when new pipeline data lands.</div>
+      </div>
+    </div>
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🗂️</div><div><div class="concept-title">Databricks Unity Catalog</div><div class="concept-sub">Centralized data governance</div></div></div>
+      <div class="concept-body">
+        <div class="concept-why"><span class="label-why">Why</span><br>Without Unity Catalog, Silver Delta tables are stored in ephemeral DBFS locations that disappear with the cluster. Unity Catalog gives tables a permanent, governed home — centralized access control, full lineage tracking, and table discovery via a standard 3-part name.</div>
+        <div class="concept-what"><span class="label-what">What</span><br>UC organizes data as <code>{catalog}.{schema}.{table}</code>. In this project: catalog = <code>j2d_databricks_7405614587903999</code> · schema = <code>silver</code> (10 managed Delta tables) · schema = <code>default</code> (audit table).</div>
+        <div class="concept-how"><span class="label-how">How it fits</span><br><code>Helper_NB</code> sets the catalog context once via <code>USE CATALOG</code>. <code>Create_Tables.py</code> bootstraps the silver schema (no LOCATION — UC manages storage). All other notebooks simply reference <code>silver.dim_patient</code> etc. and UC resolves the full path.</div>
       </div>
     </div>
   </div>
@@ -967,10 +975,11 @@ ul.body-list li{margin-bottom:4px}
       </div>
       <div class="ltab-content active ltab-pane">
         <div class="callout why"><span class="callout-icon">💡</span><div>Databricks runs PySpark — distributed Python that can process data across many machines. Even on a Single Node cluster (1 machine), PySpark gives you Delta Lake support, optimised Parquet reading, and a declarative SQL engine. We use Single Node + auto-terminate 15 min to minimise cost on the free trial.</div></div>
-        <div class="callout industry"><span class="callout-icon">🏢</span><strong>Why not just pandas?</strong> Pandas loads everything into memory. For 1,000 rows it would work, but the code would break at 100 million rows. PySpark is scale-agnostic — the same code runs on 1 node or 1,000 nodes. Writing it with Spark from the start is the professional choice.</div>
+        <div class="callout industry"><span class="callout-icon">🏢</span><strong>Why Helper_NB as bootstrap?</strong> Rather than repeating <code>%pip install</code>, Key Vault credential lookups, and Spark ADLS configuration in every notebook, all shared setup lives in <code>Helper_NB</code>. Each pipeline notebook does a single <code>%run Helper_NB</code> at the top and inherits everything — secrets, storage config, Unity Catalog context, and audit helpers. This is the real-world pattern for shared library notebooks.</div>
+        <div class="callout note"><span class="callout-icon">ℹ️</span><strong>Unity Catalog:</strong> All Silver tables are <em>fully managed</em> by Unity Catalog — no external <code>LOCATION</code> paths needed. The catalog name is <code>j2d_databricks_7405614587903999</code> (your Databricks workspace ID). Helper_NB runs <code>spark.sql("USE CATALOG j2d_databricks_7405614587903999")</code> automatically.</div>
       </div>
       <div class="ltab-content ltab-pane">
-        <h3 class="sub-h">Create Interactive Cluster</h3>
+        <h3 class="sub-h">Step 1 — Create Interactive Cluster</h3>
         <div class="code-wrap"><pre><span class="cc"># Databricks → Compute → + Create Cluster</span>
 <span class="ck">Cluster name     :</span> <span class="cs">j2d-cluster</span>
 <span class="ck">Cluster mode     :</span> <span class="cs">Single Node</span>
@@ -978,31 +987,49 @@ ul.body-list li{margin-bottom:4px}
 <span class="ck">Node type        :</span> <span class="cs">Standard_DS3_v2</span>
 <span class="ck">Auto-terminate   :</span> <span class="cs">15 minutes</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
 
-        <h3 class="sub-h">Configure ADLS Access</h3>
-        <div class="code-wrap"><pre><span class="cc"># Option A: Spark Config on Cluster (Advanced → Spark Config)</span>
-<span class="cm">spark.hadoop.fs.azure.account.key.j2dstorage101.dfs.core.windows.net</span>
-<span class="co">{{secrets/j2d-kv-scope/adls-account-key}}</span>
+        <h3 class="sub-h">Step 2 — Add Key Vault URI to Helper_NB</h3>
+        <div class="callout note"><span class="callout-icon">ℹ️</span>Helper_NB uses the Azure SDK (<code>DefaultAzureCredential</code>) to fetch secrets directly — no Databricks Secret Scope needed. The Key Vault URI and storage account name are the only values you set.</div>
+        <div class="code-wrap"><pre><span class="cc"># In Helper_NB.py — verify these two lines match your deployment:</span>
+<span class="ck">KV_URI               :</span> <span class="cs">"https://keyvault-j2d.vault.azure.net/"</span>
+<span class="ck">storage_account_name :</span> <span class="cs">"j2dstorage02"</span>
 
-<span class="cc"># Option B: In first cell of each notebook</span>
-spark.conf.set(
-  <span class="cs">"fs.azure.account.key.j2dstorage101.dfs.core.windows.net"</span>,
-  dbutils.secrets.get(scope=<span class="cs">"j2d-kv-scope"</span>, key=<span class="cs">"adls-account-key"</span>)
-)</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="cc"># Helper_NB retrieves all 4 secrets automatically:</span>
+<span class="cs">mysql_password</span>       <span class="cc"># ← key: mysql-password</span>
+<span class="cs">azuresql_password</span>    <span class="cc"># ← key: azuresql-password</span>
+<span class="cs">postgresql_password</span>  <span class="cc"># ← key: postgresql-password</span>
+<span class="cs">adls_account_key</span>     <span class="cc"># ← key: adls-account-key</span>
 
-        <h3 class="sub-h">Import Notebooks (in order)</h3>
+<span class="cc"># Grant Databricks Managed Identity (or your user) access:</span>
+<span class="cc"># Key Vault → Access Policies → + Add → Secret Get/List</span>
+<span class="cc"># Principal: Your Databricks cluster Managed Identity</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">Step 3 — Enable Unity Catalog</h3>
+        <div class="callout warn"><span class="callout-icon">⚠️</span>Unity Catalog must be enabled on your Databricks workspace before notebooks run. The catalog <code>j2d_databricks_7405614587903999</code> is your workspace's default UC catalog (shown in Account Console → Catalogs).</div>
+        <div class="code-wrap"><pre><span class="cc"># Helper_NB configures Unity Catalog automatically:</span>
+CATALOG     = <span class="cs">"j2d_databricks_7405614587903999"</span>
+AUDIT_TABLE = <span class="cs">f"{CATALOG}.default.J2D_Audit_table"</span>
+
+spark.sql(<span class="cs">f"USE CATALOG {CATALOG}"</span>)
+spark.sql(<span class="cs">"USE SCHEMA default"</span>)
+
+<span class="cc"># Silver tables are UC-managed (no LOCATION path required):</span>
+<span class="cc"># CREATE TABLE {CATALOG}.silver.dim_patient ... USING DELTA</span>
+<span class="cc"># Unity Catalog controls all storage automatically.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+
+        <h3 class="sub-h">Step 4 — Import Notebooks (in order)</h3>
         <div class="code-wrap"><pre><span class="cc"># Workspace → Users → your@email → Import</span>
 <span class="cc"># Select "Source Files (.py)" for each:</span>
-<span class="cs">1. Helper_NB.py</span>       <span class="cc"># shared utilities — import first</span>
-<span class="cs">2. Create table.py</span>    <span class="cc"># run ONCE to create Silver Delta tables</span>
-<span class="cs">3. Raw_NB.py</span>
-<span class="cs">4. Silver_NB.py</span>
-<span class="cs">5. Gold_NB.py</span>
+<span class="cs">1. Helper_NB.py</span>       <span class="cc"># shared bootstrap — import FIRST</span>
+<span class="cs">2. Create_Tables.py</span>   <span class="cc"># UC Silver schema bootstrap — run ONCE</span>
+<span class="cs">3. Raw_NB.py</span>          <span class="cc"># Raw → Bronze validation</span>
+<span class="cs">4. Silver_NB.py</span>       <span class="cc"># Bronze → Silver (10 UC Delta tables)</span>
+<span class="cs">5. Gold_NB.py</span>         <span class="cc"># Silver → Gold (7 Parquet outputs)</span>
 
-<span class="cc"># Open "Create table" notebook → Run All</span>
-<span class="cc"># This bootstraps all 6 dim + 4 fact Silver tables</span>
-<span class="cc"># Run this ONLY ONCE. Never run again after first time.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="cc"># Run Create_Tables.py ONCE after import to bootstrap Silver schema:</span>
+<span class="cc"># It drops and recreates {CATALOG}.silver — then creates all 10 tables.</span>
+<span class="cc"># DO NOT run again unless you want to wipe the Silver layer.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
 
-        <h3 class="sub-h">Create Databricks Workflow (Backup Orchestrator)</h3>
+        <h3 class="sub-h">Step 5 — Create Databricks Workflow (Backup Orchestrator)</h3>
         <div class="code-wrap"><pre><span class="cc"># Workflows → + Create Job → J2D_Healthcare_Weekly_Job</span>
 <span class="cc"># Task 1 – Raw_NB      → Depends on: (none)</span>
 <span class="cc"># Task 2 – Silver_NB   → Depends on: Raw_NB (Success)</span>
@@ -1013,11 +1040,13 @@ spark.conf.set(
       </div>
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks cluster j2d-cluster created (Single Node, 13.3 LTS, 15 min terminate)</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>ADLS access configured via secret scope or Spark config</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 notebooks imported in order</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Create table.py run once — Silver schema tables exist in catalog</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Workflow J2D_Healthcare_Weekly_Job created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks cluster j2d-cluster created (Single Node, 13.3 LTS, 15 min auto-terminate)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Unity Catalog enabled — catalog <code>j2d_databricks_7405614587903999</code> visible in Account Console</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Helper_NB.py imported and KV_URI / storage_account_name verified (keyvault-j2d / j2dstorage02)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Managed Identity granted Key Vault Secret Get/List access</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 5 notebooks imported in order (Helper_NB → Create_Tables → Raw_NB → Silver_NB → Gold_NB)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Create_Tables.py run once — <code>j2d_databricks_7405614587903999.silver</code> schema with 10 Delta tables created</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Databricks Workflow J2D_Healthcare_Weekly_Job created (Raw → Silver → Gold dependency chain)</li>
         </ul>
       </div>
       <button class="done-btn" onclick="markPhaseDone('p6')">✓ Phase 6 Complete</button>
@@ -1063,24 +1092,25 @@ dbutils.widgets.text(<span class="cs">"input_date"</span>, <span class="cs">"202
         <div class="callout warn"><span class="callout-icon">🛑</span>If Raw_NB fails, check: ADLS account key configured correctly? rawlayer CSVs exist (ADF Copy ran first)? Column names match expected schema?</div>
       </div>
       <div class="ltab-content ltab-pane">
-        <div class="callout why"><span class="callout-icon">🏗️</span><div><strong>Silver_NB.py — What it does:</strong> Reads validated Bronze Parquet, cleanses (trim whitespace, parse dates, standardise gender codes), derives new columns (age from DOB, is_currently_admitted from discharge_time IS NULL, revenue_leakage = billed_amount - approved_amount), then splits denormalised rows into a proper star schema: 6 dimension tables + 4 fact tables written as Delta format.</div></div>
-        <div class="code-wrap"><pre><span class="cc"># Silver tables created (check in Databricks catalog):</span>
-<span class="cm">silver.dim_patient</span>          <span class="cc"># patient demographics</span>
-<span class="cm">silver.dim_insurance</span>        <span class="cc"># insurer names</span>
-<span class="cm">silver.dim_doctor</span>           <span class="cc"># attending doctors</span>
-<span class="cm">silver.dim_bed</span>              <span class="cc"># bed types (ICU/General/Private)</span>
-<span class="cm">silver.dim_device</span>           <span class="cc"># medical device types</span>
-<span class="cm">silver.dim_medicine</span>         <span class="cc"># medicine catalog</span>
-<span class="cm">silver.fact_admission</span>       <span class="cc"># one row per hospital visit</span>
-<span class="cm">silver.fact_billing</span>         <span class="cc"># billed vs approved amounts</span>
-<span class="cm">silver.fact_device_usage</span>    <span class="cc"># device utilization per hospital</span>
-<span class="cm">silver.fact_medicine_inventory</span> <span class="cc"># stock levels per hospital</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <div class="callout tip"><span class="callout-icon">✅</span>Run in Databricks: <code>display(spark.sql("SHOW TABLES IN silver"))</code> — should show all 10 tables.</div>
+        <div class="callout why"><span class="callout-icon">🏗️</span><div><strong>Silver_NB.py — What it does:</strong> Reads validated Bronze Parquet, cleanses (parse dates, standardise gender codes), derives new columns (is_currently_admitted, available_stock, expiry_status), then splits denormalised rows into a star schema: 6 dimension tables + 4 fact tables written as Unity Catalog managed Delta tables. Each table write uses DELETE + INSERT (not MERGE) for idempotent re-runs.</div></div>
+        <div class="code-wrap"><pre><span class="cc"># Silver tables — Unity Catalog 3-part namespace:</span>
+<span class="cc"># {CATALOG}.silver.{table}  where CATALOG = j2d_databricks_7405614587903999</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_patient</span>          <span class="cc"># patient demographics</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_insurance</span>        <span class="cc"># insurer names</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_doctor</span>           <span class="cc"># attending doctors</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_bed</span>              <span class="cc"># bed types (ICU/General/Private)</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_device</span>           <span class="cc"># medical device types</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.dim_medicine</span>         <span class="cc"># medicine catalog</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.fact_admission</span>       <span class="cc"># one row per hospital visit</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.fact_billing</span>         <span class="cc"># billed vs approved amounts</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.fact_device_usage</span>    <span class="cc"># device utilization per hospital</span>
+<span class="cm">j2d_databricks_7405614587903999.silver.fact_medicine_inventory</span> <span class="cc"># stock levels per hospital</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="callout tip"><span class="callout-icon">✅</span>Run in Databricks: <code>display(spark.sql("SHOW TABLES IN j2d_databricks_7405614587903999.silver"))</code> — should show all 10 Delta tables.</div>
       </div>
       <div class="ltab-content ltab-pane">
-        <div class="callout why"><span class="callout-icon">🥇</span><div><strong>Gold_NB.py — What it does:</strong> Reads Silver Delta tables, runs business-level aggregations (weekly admission trends, revenue leakage by insurer, device utilization %, medicine stock alert levels), and writes 7 Parquet files to goldlayer. <em>Important: uses coalesce(1) so each table writes as a single Parquet file — required for Synapse's OPENROWSET to read cleanly.</em></div></div>
+        <div class="callout why"><span class="callout-icon">🥇</span><div><strong>Gold_NB.py — What it does:</strong> Reads Silver Unity Catalog Delta tables via <code>spark.table("{CATALOG}.silver.*")</code>, runs business-level aggregations (weekly admission trends, revenue leakage by insurer, device utilization %, medicine stock alert levels), and writes 7 Parquet files to goldlayer. <em>Important: uses coalesce(1) so each table writes as a single Parquet file — required for Synapse's OPENROWSET to read cleanly.</em></div></div>
         <div class="code-wrap"><pre><span class="cc"># Verify 7 Parquet folders in ADLS goldlayer:</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage02.dfs.core.windows.net/Gold_Data/"</span>))
 
 <span class="cc"># Should see:</span>
 <span class="cs">gold_medicine_availability/</span>
@@ -1428,11 +1458,14 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
         </table>
       </div>
       <div class="ltab-content ltab-pane">
-        <div class="code-wrap"><pre><span class="cc">-- Query audit table in Databricks SQL or notebook</span>
+        <div class="code-wrap"><pre><span class="cc">-- Query audit table in Databricks SQL or notebook (Unity Catalog full path)</span>
 <span class="cm">SELECT</span> pipeline_name, notebook_name, layer,
        record_count, status, load_time, report_month
-<span class="cm">FROM</span> J2D_Audit_table
+<span class="cm">FROM</span> j2d_databricks_7405614587903999.default.J2D_Audit_table
 <span class="cm">ORDER BY</span> load_time <span class="cm">DESC</span>;
+
+<span class="cc">-- Shorthand (works after Helper_NB sets USE CATALOG):</span>
+<span class="cm">SELECT</span> * <span class="cm">FROM</span> J2D_Audit_table <span class="cm">WHERE</span> layer = <span class="cs">'silver'</span> <span class="cm">ORDER BY</span> load_time <span class="cm">DESC</span>;
 
 <span class="cc">-- Simulate multiple weekly runs (all process January data)</span>
 <span class="cc">-- Run 1: input_date = 20260201 → processes Jan 2026</span>
@@ -1440,7 +1473,7 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
 <span class="cc">-- Safe to repeat: Gold uses mode("overwrite") — no duplicates</span>
 
 <span class="cc">-- ADLS verification in Databricks notebook</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage02.dfs.core.windows.net/Gold_Data/"</span>))</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       </div>
       <div class="ltab-content ltab-pane">
         <table>
@@ -1477,32 +1510,73 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
         <button class="ltab" onclick="switchLearnTab(this,'p11')">✅ Checklist</button>
       </div>
       <div class="ltab-content active ltab-pane">
-        <div class="callout why"><span class="callout-icon">💡</span><div>Silent failures are dangerous in data pipelines. A Logic App provides a simple Serverless endpoint to send emails to the data engineering team immediately when the ADF pipeline experiences a fault or empty data load.</div></div>
+        <div class="callout why"><span class="callout-icon">💡</span><div>Silent failures are dangerous in data pipelines. This project uses an Azure Logic App (Consumption tier) as a Serverless HTTP endpoint. ADF's <strong>Web Activity</strong> calls it after each notebook stage (Raw / Silver / Gold) with a JSON payload containing the pipeline name, run ID, stage, status, and a human-readable message. The Logic App sends a colour-coded HTML email via Gmail — green for SUCCESS, red for FAILED.</div></div>
+        <div class="callout industry"><span class="callout-icon">🏢</span><strong>ADF Webhook pattern:</strong> The pipeline uses 6 Web Activities (Raw Success/Fail, Silver Success/Fail, Gold Success/Fail) plus a global <code>ACT_NB_UpdateAuditOnFailure</code> notebook activity that calls Helper_NB with <code>audit_action=FAIL_PIPELINE</code> to write a FAILED row to the audit table before alerting.</div>
       </div>
       <div class="ltab-content ltab-pane">
         <h3 class="sub-h">11.1 Create the Logic App</h3>
         <div class="code-wrap"><pre><span class="cc"># Portal → Create a resource → Logic App</span>
 <span class="ck">Name           :</span> <span class="cs">LA_PipelineFailure_Email</span>
-<span class="ck">Resource group :</span> <span class="cs">rg-j2d-healthcare</span>
-<span class="ck">Plan type      :</span> <span class="cs">Consumption</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <h3 class="sub-h">11.2 Configure the Workflow</h3>
-        <div class="code-wrap"><pre><span class="cc"># Go to Logic App Designer</span>
-<span class="cc"># 1. Trigger: 'When a HTTP request is received'</span>
-<span class="cc"># 2. Action: 'Office 365 Outlook - Send an email (V2)'</span>
-<span class="ck">To             :</span> <span class="cs">your-email@example.com</span>
-<span class="ck">Subject        :</span> <span class="cs">ADF Pipeline Failed</span>
-<span class="ck">Body           :</span> <span class="cs">The pipeline failed. Check ADF monitor.</span>
-<span class="cc"># Save and copy the HTTP POST URL generated in the Trigger.</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <h3 class="sub-h">11.3 Connect ADF to Logic App</h3>
-        <div class="code-wrap"><pre><span class="cc"># In ADF (PL_J2D_HealthcareIngest_Enhanced)</span>
-<span class="cc"># Go to the 'ACT_WebHook_AlertOnFailure' activity</span>
-<span class="ck">URL            :</span> <span class="cs">[Paste Logic App HTTP URL]</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="ck">Resource group :</span> <span class="cs">rg-j2d-healthcare</span>  <span class="cc">(or J2D_HEALTH_CARE)</span>
+<span class="ck">Plan type      :</span> <span class="cs">Consumption</span>  <span class="cc"># serverless — pay per execution</span>
+<span class="ck">Region         :</span> <span class="cs">Central India</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">11.2 Add Workflow Actions (Logic App Designer)</h3>
+        <div class="code-wrap"><pre><span class="cc"># Designer → Add Trigger → "When a HTTP request is received"</span>
+<span class="cc"># JSON Schema (paste into Request Body JSON Schema):</span>
+{
+  <span class="ck">"type"</span>: <span class="cs">"object"</span>,
+  <span class="ck">"properties"</span>: {
+    <span class="ck">"pipelineName"</span>: { <span class="cs">"type": "string"</span> },
+    <span class="ck">"runId"</span>:        { <span class="cs">"type": "string"</span> },
+    <span class="ck">"stage"</span>:        { <span class="cs">"type": "string"</span> },
+    <span class="ck">"status"</span>:       { <span class="cs">"type": "string"</span> },
+    <span class="ck">"input_date"</span>:   { <span class="cs">"type": "string"</span> },
+    <span class="ck">"message"</span>:      { <span class="cs">"type": "string"</span> }
+  }
+}
+
+<span class="cc"># Action 1: Parse JSON (Parse_Request_Body)</span>
+<span class="cc"># Action 2: Initialize Variable — Statuscolor (string)</span>
+<span class="ck">Value :</span> <span class="cs">if(status=SUCCESS → #27ae60, FAILED → #e74c3c, SKIPPED → #f39c12)</span>
+<span class="cc"># Action 3: Initialize Variable — statusIcon (string)</span>
+<span class="ck">Value :</span> <span class="cs">if(status=SUCCESS → ✅, FAILED → ❌, SKIPPED → ⚠️)</span>
+<span class="cc"># Action 4: Send Email (Gmail — Send_Email_Notification)</span>
+<span class="ck">To      :</span> <span class="cs">your-email@gmail.com</span>
+<span class="ck">Subject :</span> <span class="cs">[statusIcon] J2D Healthcare | [stage] | [status] | [input_date]</span>
+<span class="ck">Body    :</span> <span class="cs">HTML table with pipeline name, stage, status badge, run ID, timestamp</span>
+<span class="cc"># Action 5: Response 200 OK (Return_HTTP_200)</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <h3 class="sub-h">11.3 Connect ADF Web Activities to Logic App</h3>
+        <div class="callout note"><span class="callout-icon">ℹ️</span>The ADF pipeline has 6 Web Activities that all call the same Logic App URL. After saving the HTTP trigger, copy the generated POST URL (it contains the SAS signature). This URL is already configured in <code>PL_J2D_HealthcareIngest.json</code>.</div>
+        <div class="code-wrap"><pre><span class="cc"># ADF Web Activities that call the Logic App:</span>
+<span class="cs">WebHook_Raw_success</span>    <span class="cc"># after Run_Row_NB succeeds</span>
+<span class="cs">WebHook_Raw_Failed</span>     <span class="cc"># after Run_Row_NB fails</span>
+<span class="cs">WebHook_Silver_Success</span> <span class="cc"># after Run_silver_NB succeeds</span>
+<span class="cs">WebHook_Silver_Failed</span>  <span class="cc"># after Run_silver_NB fails</span>
+<span class="cs">WebHook_Gold_Success</span>   <span class="cc"># after Run_Gold_NB succeeds</span>
+<span class="cs">WebHook_Gold_Failed</span>    <span class="cc"># after Run_Gold_NB fails</span>
+
+<span class="cc"># Each Web Activity POST body example (Silver Success):</span>
+{
+  <span class="ck">"pipelineName"</span>: <span class="cs">"@{pipeline().Pipeline}"</span>,
+  <span class="ck">"runId"</span>:        <span class="cs">"@{pipeline().RunId}"</span>,
+  <span class="ck">"stage"</span>:        <span class="cs">"Silver"</span>,
+  <span class="ck">"status"</span>:       <span class="cs">"SUCCESS"</span>,
+  <span class="ck">"input_date"</span>:   <span class="cs">"@{pipeline().parameters.report_month}"</span>,
+  <span class="ck">"message"</span>:      <span class="cs">"Silver notebook completed. Delta tables updated."</span>
+}
+
+<span class="cc"># ACT_NB_UpdateAuditOnFailure also calls Helper_NB directly with:</span>
+<span class="ck">audit_action :</span> <span class="cs">FAIL_PIPELINE</span>  <span class="cc"># writes FAILED row to J2D_Audit_table</span></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       </div>
       <div class="ltab-content ltab-pane">
         <ul class="checklist">
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Logic App LA_PipelineFailure_Email created in Consumption tier</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>HTTP POST URL generated and copied</li>
-          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Web activity URL updated in ADF</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Logic App <code>LA_PipelineFailure_Email</code> created (Consumption, Central India)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>HTTP trigger schema configured (pipelineName, runId, stage, status, input_date, message)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Statuscolor + statusIcon variables initialized (✅ SUCCESS / ❌ FAILED / ⚠️ SKIPPED)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Gmail "Send Email" action connected and authenticated</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>HTTP POST URL copied from trigger (contains SAS signature)</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>All 6 ADF Web Activities (Raw/Silver/Gold × Success/Fail) verified in pipeline JSON</li>
+          <li class="ci" onclick="toggleCheck(this)"><div class="chk"></div>Test: trigger pipeline → email received with correct stage, status badge and colour</li>
         </ul>
       </div>
       <button class="done-btn" onclick="markPhaseDone('p11')">✓ Phase 11 Complete</button>
@@ -1519,9 +1593,9 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
 ════════════════════════════════════════════════ -->
 <div id="sec-schema" class="section">
   <div class="sec-head">
-    <div class="sec-tag" style="background:var(--teal-dim);color:var(--teal)">Silver Layer</div>
+    <div class="sec-tag" style="background:var(--teal-dim);color:var(--teal)">Unity Catalog · Silver Layer</div>
     <div class="sec-title">Data Model — Star Schema</div>
-    <div class="sec-desc">6 dimension tables + 4 fact tables + 7 gold aggregation outputs. Click any table header to see its columns.</div>
+    <div class="sec-desc">6 dimension tables + 4 fact tables managed as Unity Catalog Delta tables in <code>j2d_databricks_7405614587903999.silver</code>. 7 gold aggregation Parquet outputs in ADLS. Click any table header to see its columns.</div>
   </div>
   <div class="schema-view">
     <div class="schema-table"><div class="schema-head dim">📘 dim_patient</div>
@@ -1677,12 +1751,15 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
     </div>
     <div class="ref-card">
       <div class="ref-title">📓 Databricks Notebooks</div>
-      <div class="ref-row"><span class="ref-key">Shared utils</span><span class="ref-val">Helper_NB.py</span></div>
-      <div class="ref-row"><span class="ref-key">Schema bootstrap</span><span class="ref-val">Create table.py (run once)</span></div>
+      <div class="ref-row"><span class="ref-key">Shared bootstrap</span><span class="ref-val">Helper_NB.py (%run at top of each nb)</span></div>
+      <div class="ref-row"><span class="ref-key">UC Schema bootstrap</span><span class="ref-val">Create_Tables.py (run ONCE)</span></div>
       <div class="ref-row"><span class="ref-key">Raw → Bronze</span><span class="ref-val">Raw_NB.py</span></div>
       <div class="ref-row"><span class="ref-key">Bronze → Silver</span><span class="ref-val">Silver_NB.py</span></div>
       <div class="ref-row"><span class="ref-key">Silver → Gold</span><span class="ref-val">Gold_NB.py</span></div>
-      <div class="ref-row"><span class="ref-key">Audit table</span><span class="ref-val">J2D_Audit_table</span></div>
+      <div class="ref-row"><span class="ref-key">Unity Catalog</span><span class="ref-val">j2d_databricks_7405614587903999</span></div>
+      <div class="ref-row"><span class="ref-key">Audit table (UC)</span><span class="ref-val">j2d_databricks_7405614587903999.default.J2D_Audit_table</span></div>
+      <div class="ref-row"><span class="ref-key">Key Vault URI</span><span class="ref-val">keyvault-j2d.vault.azure.net</span></div>
+      <div class="ref-row"><span class="ref-key">Storage account</span><span class="ref-val">j2dstorage02</span></div>
     </div>
     <div class="ref-card">
       <div class="ref-title">💰 Cost Estimate</div>
@@ -1697,20 +1774,20 @@ display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core
     </div>
   </div>
   <h3 class="sub-h">🔍 Useful Queries</h3>
-  <div class="code-wrap"><pre><span class="cc">-- Audit table: see all pipeline runs</span>
+  <div class="code-wrap"><pre><span class="cc">-- Audit table: see all pipeline runs (Unity Catalog full path)</span>
 <span class="cm">SELECT</span> pipeline_name, notebook_name, layer, record_count, status, load_time
-<span class="cm">FROM</span> J2D_Audit_table
+<span class="cm">FROM</span> j2d_databricks_7405614587903999.default.J2D_Audit_table
 <span class="cm">ORDER BY</span> load_time <span class="cm">DESC</span>;
 
 <span class="cc">-- Synapse: spot-check gold data</span>
 <span class="cm">SELECT TOP 5 * FROM</span> gold.vw_Finance_Summary;
 <span class="cm">SELECT COUNT(*) FROM</span> gold.weekly_admissions;
 
-<span class="cc">-- Databricks: verify goldlayer folders</span>
-display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage101.dfs.core.windows.net/Gold_Data/"</span>))
+<span class="cc">-- Databricks: verify goldlayer folders (j2dstorage02)</span>
+display(dbutils.fs.ls(<span class="cs">"abfss://goldlayer@j2dstorage02.dfs.core.windows.net/Gold_Data/"</span>))
 
-<span class="cc">-- Databricks: check Silver tables</span>
-<span class="cm">SHOW TABLES IN</span> silver;</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<span class="cc">-- Databricks: check Silver tables in Unity Catalog</span>
+<span class="cm">SHOW TABLES IN</span> j2d_databricks_7405614587903999.silver;</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
 </div><!-- /reference -->
 
 
@@ -1991,7 +2068,7 @@ Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
     <div class="analogy-head"><span class="analogy-icon">🔐</span>Enterprise Standard: Azure Key Vault Integration</div>
     Industry security mandates that <em>no credentials</em> exist in source control. Linked Services and Databricks endpoints dynamically fetch secrets via Managed Identity from an Azure Key Vault at runtime.
   </div>
-  <p class="body-text"><strong>In this project:</strong> Passwords are listed directly inside <code>SecureString</code> configurations in the JSON files. While better than plaintext, true architectures never let tokens touch Git.</p>
+  <p class="body-text"><strong>In this project:</strong> All 4 secrets (MySQL, AzureSQL, PostgreSQL passwords + ADLS account key) are stored in Azure Key Vault (<code>keyvault-j2d</code>). <code>Helper_NB.py</code> retrieves them at runtime using <code>DefaultAzureCredential</code> + the Azure SDK. No passwords exist in any notebook or Git-tracked file. ✅ This matches the enterprise standard.</p>
 
   <h3 class="sub-h">3. Software Engineering on Databricks</h3>
   <div class="analogy">
@@ -2072,6 +2149,13 @@ Tags   : Project=J2D-Healthcare, Environment=Dev</pre>
       <div class="concept-card-head"><div class="concept-icon">🔐</div><div><div class="concept-title">Q: How is security handled?</div><div class="concept-sub">RBAC and Managed Identities</div></div></div>
       <div class="concept-body">
          <span class="label-what">Answer</span><br>No passwords sit in code. The pipeline relies entirely on <strong>Role-Based Access Control (RBAC)</strong> and <strong>Managed Identities</strong>. Synapse and Databricks are given the "Storage Blob Data Reader" role to query ADLS. Any external tokens needed (like Databricks deployment tokens) are passed from Azure Key Vault implicitly, ensuring that developers only interact with connection references rather than sensitive strings.
+      </div>
+    </div>
+    <!-- Card 7: Unity Catalog -->
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-card-head"><div class="concept-icon">🗂️</div><div><div class="concept-title">Q: Why Unity Catalog instead of manual schema setup?</div><div class="concept-sub">Governance — 3-part namespace</div></div></div>
+      <div class="concept-body">
+         <span class="label-what">Answer</span><br>Before Unity Catalog, Silver tables were created with explicit <code>LOCATION</code> paths on ADLS or DBFS — requiring manual IAM grants, no lineage, and schema drift across environments. With Unity Catalog, tables are <strong>fully managed</strong>: storage is assigned automatically, access is governed by UC policies, and every table is discoverable using the standard 3-part name <code>catalog.schema.table</code>. Helper_NB bootstraps the catalog context once, so all notebooks share the same governed environment without repeating configuration.
       </div>
     </div>
   </div>

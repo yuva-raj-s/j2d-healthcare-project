@@ -1,22 +1,69 @@
 {
-    "name": "PL_J2D_HealthcareIngest",
+    "name": "PL_J2D_HealthcareIngest1",
     "properties": {
-        "description": "J2D Healthcare – End-to-end weekly parameter-driven ingestion pipeline. Copies Hospital (MySQL), Device (Azure SQL), Pharma (PostgreSQL) to Raw layer, then triggers Raw → Silver → Gold Databricks notebooks.",
         "activities": [
             {
-                "name": "Copy_Hospital_From_MySQL",
-                "description": "Copy hospital_events table from Azure MySQL to ADLS rawlayer CSV",
-                "type": "Copy",
+                "name": "ACT_NB_SetrunMetadata",
+                "type": "DatabricksNotebook",
                 "dependsOn": [],
                 "policy": {
-                    "timeout": "0.01:00:00",
-                    "retry": 2,
-                    "retryIntervalInSeconds": 60
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Workspace/Users/vinaymk469@gmail.com/Helper_NB",
+                    "baseParameters": {
+                        "audit_action": "START",
+                        "pipeline_name": {
+                            "value": "@pipeline().Pipeline",
+                            "type": "Expression"
+                        },
+                        "run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        },
+                        "report_month": {
+                            "value": "@pipeline().parameters.report_month",
+                            "type": "Expression"
+                        },
+                        "catalog_name": {
+                            "value": "@pipeline().parameters.catalog_name",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricks1",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "ACT_Copy_HospitalEvents",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "ACT_NB_SetrunMetadata",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
                 },
                 "userProperties": [],
                 "typeProperties": {
                     "source": {
-                        "type": "MySqlSource"
+                        "type": "AzureMySqlSource",
+                        "queryTimeout": "02:00:00"
                     },
                     "sink": {
                         "type": "DelimitedTextSink",
@@ -26,10 +73,27 @@
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
                             "quoteAllText": true,
-                            "fileExtension": ".csv"
+                            "fileExtension": ".txt"
                         }
                     },
                     "enableStaging": false,
+                    "logSettings": {
+                        "enableCopyActivityLog": true,
+                        "copyActivityLogSettings": {
+                            "logLevel": "Warning",
+                            "enableReliableLogging": false
+                        },
+                        "logLocationSettings": {
+                            "linkedServiceName": {
+                                "referenceName": "LS_ADLS_RawLayer",
+                                "type": "LinkedServiceReference"
+                            },
+                            "path": {
+                                "value": "@concat(pipeline().parameters.raw_container,'/Logs/Hospital/')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
                     "translator": {
                         "type": "TabularTranslator",
                         "typeConversion": true,
@@ -53,14 +117,22 @@
                 ]
             },
             {
-                "name": "Copy_Device_From_AzureSQL",
-                "description": "Copy device_events table from Azure SQL DB to ADLS rawlayer CSV",
+                "name": "ACT_Copy_DeviceEvents",
                 "type": "Copy",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "ACT_NB_SetrunMetadata",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "policy": {
-                    "timeout": "0.01:00:00",
-                    "retry": 2,
-                    "retryIntervalInSeconds": 60
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
                 },
                 "userProperties": [],
                 "typeProperties": {
@@ -77,10 +149,35 @@
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
                             "quoteAllText": true,
-                            "fileExtension": ".csv"
+                            "fileExtension": ".txt"
                         }
                     },
-                    "enableStaging": false
+                    "enableStaging": false,
+                    "logSettings": {
+                        "enableCopyActivityLog": true,
+                        "copyActivityLogSettings": {
+                            "logLevel": "Warning",
+                            "enableReliableLogging": false
+                        },
+                        "logLocationSettings": {
+                            "linkedServiceName": {
+                                "referenceName": "LS_ADLS_RawLayer",
+                                "type": "LinkedServiceReference"
+                            },
+                            "path": {
+                                "value": "@concat(pipeline().parameters.raw_container,'/Logs/Device/')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
                 },
                 "inputs": [
                     {
@@ -96,19 +193,29 @@
                 ]
             },
             {
-                "name": "Copy_Pharma_From_PostgreSQL",
-                "description": "Copy pharma_events table from Azure PostgreSQL to ADLS rawlayer CSV",
+                "name": "ACT_Copy_PharmaEvents",
                 "type": "Copy",
-                "dependsOn": [],
+                "dependsOn": [
+                    {
+                        "activity": "ACT_NB_SetrunMetadata",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "policy": {
-                    "timeout": "0.01:00:00",
-                    "retry": 2,
-                    "retryIntervalInSeconds": 60
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 41,
+                    "secureOutput": false,
+                    "secureInput": false
                 },
                 "userProperties": [],
                 "typeProperties": {
                     "source": {
-                        "type": "PostgreSqlV2Source"
+                        "type": "AzurePostgreSqlSource",
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00"
                     },
                     "sink": {
                         "type": "DelimitedTextSink",
@@ -118,10 +225,35 @@
                         "formatSettings": {
                             "type": "DelimitedTextWriteSettings",
                             "quoteAllText": true,
-                            "fileExtension": ".csv"
+                            "fileExtension": ".txt"
                         }
                     },
-                    "enableStaging": false
+                    "enableStaging": false,
+                    "logSettings": {
+                        "enableCopyActivityLog": true,
+                        "copyActivityLogSettings": {
+                            "logLevel": "Warning",
+                            "enableReliableLogging": false
+                        },
+                        "logLocationSettings": {
+                            "linkedServiceName": {
+                                "referenceName": "LS_ADLS_RawLayer",
+                                "type": "LinkedServiceReference"
+                            },
+                            "path": {
+                                "value": "@concat(pipeline().parameters.raw_container,'/Logs/pharma/')",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
                 },
                 "inputs": [
                     {
@@ -137,199 +269,621 @@
                 ]
             },
             {
-                "name": "Run_Raw_NB",
-                "description": "Trigger Databricks Raw_NB – CSV validation and Bronze Parquet write",
-                "type": "DatabricksNotebook",
+                "name": "ACT_Set_Var_HospitalRowCounts",
+                "type": "SetVariable",
                 "dependsOn": [
                     {
-                        "activity": "Copy_Hospital_From_MySQL",
+                        "activity": "ACT_Copy_HospitalEvents",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "hospital_rows_copied",
+                    "value": {
+                        "value": "@activity('ACT_Copy_HospitalEvents').output.rowsCopied",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "ACT_Set_Var_DeviceRowCounts",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "ACT_Copy_DeviceEvents",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "device_rows_copied",
+                    "value": {
+                        "value": "@activity('ACT_Copy_DeviceEvents').output.rowsCopied",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "ACT_Set_Var_PharmaRowCounts",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "ACT_Copy_PharmaEvents",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "pharma_rows_copied",
+                    "value": {
+                        "value": "@activity('ACT_Copy_PharmaEvents').output.rowsCopied",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "ACT_IfCheck_RowCounts",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "ACT_Set_Var_HospitalRowCounts",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
                     },
                     {
-                        "activity": "Copy_Device_From_AzureSQL",
+                        "activity": "ACT_Set_Var_DeviceRowCounts",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
                     },
                     {
-                        "activity": "Copy_Pharma_From_PostgreSQL",
+                        "activity": "ACT_Set_Var_PharmaRowCounts",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
                     }
                 ],
-                "policy": {
-                    "timeout": "0.02:00:00",
-                    "retry": 1,
-                    "retryIntervalInSeconds": 120
-                },
                 "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Raw_NB",
-                    "baseParameters": {
-                        "pipeline_name": {
-                            "value": "@pipeline().Pipeline",
-                            "type": "Expression"
-                        },
-                        "notebook_name": "raw_nb",
-                        "run_id": {
-                            "value": "@pipeline().RunId",
-                            "type": "Expression"
-                        },
-                        "source": "MySQL|AzureSQL|PostgreSQL",
-                        "input_date": {
-                            "value": "@pipeline().parameters.input_date",
-                            "type": "Expression"
+                    "expression": {
+                        "value": "@and(and(greater(variables('hospital_rows_copied'), 0), greater(variables('device_rows_copied'), 0)), greater(variables('pharma_rows_copied'), 0))",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Fail1",
+                            "type": "Fail",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "message": "One or more sources returned 0 rows. Hospital, Device or Pharma copy produced empty output.",
+                                "errorCode": "EMPTY_SOURCE_DATA"
+                            }
                         }
-                    }
-                },
-                "linkedServiceName": {
-                    "referenceName": "LS_AzureDatabricks",
-                    "type": "LinkedServiceReference"
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Run_Row_NB",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Users/vinaymk469@gmail.com/Raw_NB",
+                                "baseParameters": {
+                                    "pipeline_name": {
+                                        "value": "@pipeline().Pipeline",
+                                        "type": "Expression"
+                                    },
+                                    "notebook_name": {
+                                        "value": "raw_nb",
+                                        "type": "Expression"
+                                    },
+                                    "run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    },
+                                    "report_month": {
+                                        "value": "@pipeline().parameters.report_month",
+                                        "type": "Expression"
+                                    },
+                                    "raw_container": {
+                                        "value": "@pipeline().parameters.raw_container",
+                                        "type": "Expression"
+                                    },
+                                    "bronze_container": {
+                                        "value": "@pipeline().parameters.bronze_container",
+                                        "type": "Expression"
+                                    },
+                                    "input_date": {
+                                        "value": "@concat(replace(pipeline().parameters.report_month, '-', ''), '01')",
+                                        "type": "Expression"
+                                    },
+                                    "catalog_name": {
+                                        "value": "@pipeline().parameters.catalog_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AzureDatabricks1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "Run_silver_NB",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_Row_NB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Workspace/Users/vinaymk469@gmail.com/Silver_NB",
+                                "baseParameters": {
+                                    "pipeline_name": {
+                                        "value": "@pipeline().Pipeline",
+                                        "type": "Expression"
+                                    },
+                                    "notebook_name": {
+                                        "value": "silver_nb",
+                                        "type": "Expression"
+                                    },
+                                    "run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    },
+                                    "source": {
+                                        "value": "MySQL|AzureSQL|PostgreSQL",
+                                        "type": "Expression"
+                                    },
+                                    "input_date": {
+                                        "value": "@concat(replace(pipeline().parameters.report_month, '-', ''), '01')",
+                                        "type": "Expression"
+                                    },
+                                    "report_month": {
+                                        "value": "@pipeline().parameters.report_month",
+                                        "type": "Expression"
+                                    },
+                                    "catalog_name": {
+                                        "value": "@pipeline().parameters.catalog_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AzureDatabricks1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "Run_Gold_NB",
+                            "type": "DatabricksNotebook",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_silver_NB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 40,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "notebookPath": "/Users/vinaymk469@gmail.com/Gold_NB",
+                                "baseParameters": {
+                                    "pipeline_name": {
+                                        "value": "@pipeline().Pipeline",
+                                        "type": "Expression"
+                                    },
+                                    "notebook_name": {
+                                        "value": "gold_nb",
+                                        "type": "Expression"
+                                    },
+                                    "run_id": {
+                                        "value": "@pipeline().RunId",
+                                        "type": "Expression"
+                                    },
+                                    "source": {
+                                        "value": "MySQL|AzureSQL|PostgreSQL",
+                                        "type": "Expression"
+                                    },
+                                    "input_date": {
+                                        "value": "@concat(replace(pipeline().parameters.report_month, '-', ''), '01')",
+                                        "type": "Expression"
+                                    },
+                                    "report_month": {
+                                        "value": "@pipeline().parameters.report_month",
+                                        "type": "Expression"
+                                    },
+                                    "catalog_name": {
+                                        "value": "@pipeline().parameters.catalog_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AzureDatabricks1",
+                                "type": "LinkedServiceReference"
+                            }
+                        },
+                        {
+                            "name": "WebHook_Raw_success",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_Row_NB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Raw",
+                                    "status": "SUCCESS",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Raw notebook completed. Parquet files created in bronze layer."
+                                }
+                            }
+                        },
+                        {
+                            "name": "WebHook_Raw_Failed",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_Row_NB",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Raw",
+                                    "status": "FAILED",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Raw notebook FAILED. Bronze layer not updated. Check Databricks logs."
+                                }
+                            }
+                        },
+                        {
+                            "name": "WebHook_Silver_Success",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_silver_NB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Silver",
+                                    "status": "SUCCESS",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Silver notebook completed. Delta tables updated. Validation passed."
+                                }
+                            }
+                        },
+                        {
+                            "name": "WebHook_Silver_Failed",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_silver_NB",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 4,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Silver",
+                                    "status": "FAILED",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Silver notebook FAILED. Delta tables may be incomplete. Check validation rules."
+                                }
+                            }
+                        },
+                        {
+                            "name": "WebHook_Gold_Failed",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_Gold_NB",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Gold",
+                                    "status": "FAILED",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Gold notebook FAILED. Aggregations incomplete. Power BI data NOT updated."
+                                }
+                            }
+                        },
+                        {
+                            "name": "WebHook_Gold_Success",
+                            "type": "WebActivity",
+                            "dependsOn": [
+                                {
+                                    "activity": "Run_Gold_NB",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 60,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
+                                "body": {
+                                    "pipelineName": "@{pipeline().Pipeline}",
+                                    "runId": "@{pipeline().RunId}",
+                                    "stage": "Gold",
+                                    "status": "SUCCESS",
+                                    "input_date": "@{pipeline().parameters.report_month}",
+                                    "message": "Gold notebook completed. All views updated. Power BI data is fresh."
+                                }
+                            }
+                        }
+                    ]
                 }
             },
             {
-                "name": "Run_Silver_NB",
-                "description": "Trigger Databricks Silver_NB – Bronze to Silver Delta tables",
+                "name": "ACT_NB_UpdateAuditOnFailure",
                 "type": "DatabricksNotebook",
                 "dependsOn": [
                     {
-                        "activity": "Run_Raw_NB",
+                        "activity": "ACT_Copy_HospitalEvents",
                         "dependencyConditions": [
-                            "Succeeded"
+                            "Failed"
                         ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.02:00:00",
-                    "retry": 1,
-                    "retryIntervalInSeconds": 120
-                },
-                "userProperties": [],
-                "typeProperties": {
-                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Silver_NB",
-                    "baseParameters": {
-                        "pipeline_name": {
-                            "value": "@pipeline().Pipeline",
-                            "type": "Expression"
-                        },
-                        "notebook_name": "silver_nb",
-                        "run_id": {
-                            "value": "@pipeline().RunId",
-                            "type": "Expression"
-                        },
-                        "source": "MySQL|AzureSQL|PostgreSQL",
-                        "input_date": {
-                            "value": "@pipeline().parameters.input_date",
-                            "type": "Expression"
-                        }
-                    }
-                },
-                "linkedServiceName": {
-                    "referenceName": "LS_AzureDatabricks",
-                    "type": "LinkedServiceReference"
-                }
-            },
-            {
-                "name": "Run_Gold_NB",
-                "description": "Trigger Databricks Gold_NB – Silver to Gold Parquet in ADLS",
-                "type": "DatabricksNotebook",
-                "dependsOn": [
+                    },
                     {
-                        "activity": "Run_Silver_NB",
+                        "activity": "ACT_Copy_DeviceEvents",
                         "dependencyConditions": [
-                            "Succeeded"
+                            "Failed"
+                        ]
+                    },
+                    {
+                        "activity": "ACT_Copy_PharmaEvents",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    },
+                    {
+                        "activity": "ACT_IfCheck_RowCounts",
+                        "dependencyConditions": [
+                            "Failed"
                         ]
                     }
                 ],
                 "policy": {
-                    "timeout": "0.02:00:00",
-                    "retry": 1,
-                    "retryIntervalInSeconds": 120
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
                 },
                 "userProperties": [],
                 "typeProperties": {
-                    "notebookPath": "/Workspace/Users/avinashanu101@gmail.com/Gold_NB",
+                    "notebookPath": "/Users/vinaymk469@gmail.com/Helper_NB",
                     "baseParameters": {
+                        "audit_action": {
+                            "value": "FAIL_PIPELINE",
+                            "type": "Expression"
+                        },
                         "pipeline_name": {
                             "value": "@pipeline().Pipeline",
                             "type": "Expression"
                         },
-                        "notebook_name": "gold_nb",
                         "run_id": {
                             "value": "@pipeline().RunId",
                             "type": "Expression"
                         },
-                        "source": "MySQL|AzureSQL|PostgreSQL",
-                        "input_date": {
-                            "value": "@pipeline().parameters.input_date",
+                        "report_month": {
+                            "value": "@pipeline().parameters.report_month",
+                            "type": "Expression"
+                        },
+                        "error_message": {
+                            "value": "@concat('pipeline failed. RunId: ', pipeline().RunId)",
+                            "type": "Expression"
+                        },
+                        "catalog_name": {
+                            "value": "@pipeline().parameters.catalog_name",
                             "type": "Expression"
                         }
                     }
                 },
                 "linkedServiceName": {
-                    "referenceName": "LS_AzureDatabricks",
+                    "referenceName": "AzureDatabricks1",
                     "type": "LinkedServiceReference"
                 }
             },
             {
-                "name": "OnFailure_Notify",
-                "description": "Web activity to log pipeline failure to audit or alert team",
+                "name": "ACT_WebHook_Overall_Failed",
                 "type": "WebActivity",
                 "dependsOn": [
                     {
-                        "activity": "Run_Raw_NB",
+                        "activity": "ACT_NB_UpdateAuditOnFailure",
                         "dependencyConditions": [
-                            "Failed"
-                        ]
-                    },
-                    {
-                        "activity": "Run_Silver_NB",
-                        "dependencyConditions": [
-                            "Failed"
-                        ]
-                    },
-                    {
-                        "activity": "Run_Gold_NB",
-                        "dependencyConditions": [
-                            "Failed"
+                            "Succeeded"
                         ]
                     }
                 ],
                 "policy": {
-                    "timeout": "0.00:10:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
                 },
                 "userProperties": [],
                 "typeProperties": {
                     "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json"
-                    },
-                    "url": "https://prod-xx.eastus.logic.azure.com/workflows/REPLACE_WITH_YOUR_LOGIC_APP_URL",
+                    "url": "https://prod-25.centralindia.logic.azure.com:443/workflows/ff6ede5b716849b69e3acca372583d50/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=zp66ZrzDDvn4ncz-xdTb1J5A3Cq0z_RozmuXt_AIHw8",
                     "body": {
-                        "value": "@concat('{\"pipelineName\":\"', pipeline().Pipeline, '\",\"runId\":\"', pipeline().RunId, '\",\"status\":\"FAILED\"}')",
-                        "type": "Expression"
+                        "pipelineName": "@{pipeline().Pipeline}",
+                        "runId": "@{pipeline().RunId}",
+                        "stage": "Pipeline",
+                        "status": "FAILED",
+                        "input_date": "@{pipeline().parameters.report_month}",
+                        "message": "Overall pipeline failed at copy or row check stage. No notebooks were executed."
                     }
                 }
             }
         ],
         "parameters": {
-            "input_date": {
+            "report_month": {
                 "type": "string",
-                "defaultValue": "20260201"
+                "defaultValue": "2026-02"
+            },
+            "raw_container": {
+                "type": "string",
+                "defaultValue": "rawlayer"
+            },
+            "bronze_container": {
+                "type": "string",
+                "defaultValue": "bronzelayer"
+            },
+            "env": {
+                "type": "string",
+                "defaultValue": "prod"
+            },
+            "catalog_name": {
+                "type": "string",
+                "defaultValue": "j2d_databricks_7405614587903999"
             }
         },
-        "folder": {
-            "name": "J2D_Healthcare"
+        "variables": {
+            "hospital_rows_copied": {
+                "type": "Integer"
+            },
+            "device_rows_copied": {
+                "type": "Integer"
+            },
+            "pharma_rows_copied": {
+                "type": "Integer"
+            }
         },
-        "annotations": [
-            "j2d-healthcare",
-            "medallion-architecture",
-            "weekly-ingestion"
-        ]
-    }
+        "annotations": [],
+        "lastPublishTime": "2026-04-28T09:10:32Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
 }

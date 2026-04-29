@@ -1,9 +1,9 @@
 # Databricks notebook source
-# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Helper_NB"
+# MAGIC %run "/Workspace/Users/vinaymk469@gmail.com/Helper_NB"
 
 # COMMAND ----------
 
-# MAGIC %run "/Workspace/Users/avinashanu101@gmail.com/Create_Tables"
+# MAGIC %run "/Workspace/Users/vinaymk469@gmail.com/Create_Tables"
 
 # COMMAND ----------
 
@@ -489,9 +489,7 @@ write_audit_record(pipeline_name, notebook_name, run_id, source, "silver", valid
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT * FROM j2d_databricks_04.default.J2D_Audit_table
-# MAGIC WHERE layer = 'silver'
+spark.sql(f"SELECT * FROM {AUDIT_TABLE} WHERE layer = 'silver'").display()
 
 # COMMAND ----------
 
