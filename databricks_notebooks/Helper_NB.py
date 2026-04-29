@@ -24,7 +24,7 @@
 #    the Python interpreter — do NOT call dbutils.library.restartPython()
 #    after this cell, as it would re-restart the kernel unnecessarily.
 # -------------------------------------------------------------------------
-# MAGIC %pip install azure-identity azure-keyvault-secrets --quiet
+%pip install azure-identity azure-keyvault-secrets --quiet
 
 # COMMAND ----------
 
@@ -54,7 +54,7 @@ from pyspark.sql.types import (
 # -------------------------------------------------------------------------
 # 3. Key Vault — retrieve all secrets once
 # -------------------------------------------------------------------------
-KV_URI = "https://j2d-keyvault101.vault.azure.net/"
+KV_URI = "https://keyvault-j2d.vault.azure.net/"
 _kv_credential = DefaultAzureCredential()
 _kv_client      = SecretClient(vault_url=KV_URI, credential=_kv_credential)
 
@@ -62,7 +62,6 @@ mysql_password      = _kv_client.get_secret("mysql-password").value
 azuresql_password   = _kv_client.get_secret("azuresql-password").value
 postgresql_password = _kv_client.get_secret("postgresql-password").value
 adls_account_key    = _kv_client.get_secret("adls-account-key").value
-synapse_password    = _kv_client.get_secret("synapse-password").value
 
 print("Key Vault secrets loaded.")
 
@@ -71,7 +70,7 @@ print("Key Vault secrets loaded.")
 # -------------------------------------------------------------------------
 # 4. Storage & Unity Catalog configuration
 # -------------------------------------------------------------------------
-storage_account_name = "j2dstorage101"
+storage_account_name = "j2dstorage02"
 
 # Configure ADLS Gen2 access for the entire Spark session
 spark.conf.set(
@@ -80,8 +79,11 @@ spark.conf.set(
 )
 
 # Unity Catalog — all managed objects live under this catalog
-CATALOG     = "j2d_databricks_04"
+CATALOG = "j2d_databricks_7405614587903999"
 AUDIT_TABLE = f"{CATALOG}.default.J2D_Audit_table"
+
+spark.sql(f"USE CATALOG {CATALOG}")
+spark.sql("USE SCHEMA default")
 
 print(f"Storage configured for: {storage_account_name}")
 print(f"Unity Catalog: {CATALOG}  |  Audit table: {AUDIT_TABLE}")
